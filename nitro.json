@@ -1,0 +1,12 @@
+{
+  "cxxNamespace": ["bugzzapp"],
+  "ios": {
+    "iosModuleName": "BugzzApp"
+  },
+  "android": {
+    "androidNamespace": ["bugzzapp"],
+    "androidCxxLibName": "BugzzApp"
+  },
+  "autolinking": {},
+  "ignorePaths": ["node_modules"]
+}
