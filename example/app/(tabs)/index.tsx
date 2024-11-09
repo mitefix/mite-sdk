@@ -1,18 +1,47 @@
-import { Image, StyleSheet, Platform, Button } from "react-native";
-
 import { HelloWave } from "@/components/HelloWave";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { BugzzApp } from "@henrypl/bugzzapp-sdk";
-
-const bugzzApp = new BugzzApp({
-  apiKey: "test",
-  appId: "test",
-});
+import {
+  Button,
+  Image,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View
+} from "react-native";
 
 export default function HomeScreen() {
-  bugzzApp.init();
+  const triggerTypeError = () => {
+      // Trying to call a method on undefined
+      const user = undefined;
+      user.getName();
+    };
+
+    const triggerReferenceError = () => {
+      // Trying to call an undefined function
+      nonExistentFunction();
+    };
+
+    const triggerPromiseError = async () => {
+      // Throwing an error in a promise
+      new Promise((resolve, reject) => {
+        reject(new Error('Async operation failed'));
+      });
+    };
+
+    const triggerCustomError = () => {
+      // Throwing a custom error
+      throw new Error('This is a custom error message');
+    };
+
+    const triggerRangeError = () => {
+      // Creating an array with invalid length
+      new Array(-1);
+    };
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
@@ -23,67 +52,57 @@ export default function HomeScreen() {
         />
       }
     >
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit{" "}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText>{" "}
-          to see changes. Press{" "}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: "cmd + d",
-              android: "cmd + m",
-              web: "F12",
-            })}
-          </ThemedText>{" "}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this
-          starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{" "}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText>{" "}
-          to get a fresh <ThemedText type="defaultSemiBold">app</ThemedText>{" "}
-          directory. This will move the current{" "}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{" "}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
+      <View style={styles.container}>
+        <Text style={styles.title}>Error Testing App</Text>
 
-      <Button
-        title="Test"
-        onPress={async () => {
-          await new Promise((resolve) => setTimeout(resolve, 100));
-          throw new Error("Test async error");
-          // return Promise.reject(new Error("Test promise rejection"));
-          // throw new Error("test");
-        }}
-      />
+        <Pressable style={styles.button} onPress={triggerTypeError}>
+          <Text style={styles.buttonText}>Trigger TypeError</Text>
+        </Pressable>
+
+        <Pressable style={styles.button} onPress={triggerReferenceError}>
+          <Text style={styles.buttonText}>Trigger ReferenceError</Text>
+        </Pressable>
+
+        <Pressable style={styles.button} onPress={triggerPromiseError}>
+          <Text style={styles.buttonText}>Trigger Promise Rejection</Text>
+        </Pressable>
+
+        <Pressable style={styles.button} onPress={triggerCustomError}>
+          <Text style={styles.buttonText}>Trigger Custom Error</Text>
+        </Pressable>
+
+        <Pressable style={styles.button} onPress={triggerRangeError}>
+          <Text style={styles.buttonText}>Trigger RangeError</Text>
+        </Pressable>
+      </View>
     </ParallaxScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: "row",
+  container: {
+    flex: 1,
+    justifyContent: "center",
     alignItems: "center",
-    gap: 8,
+    padding: 20,
+    gap: 10,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
+  button: {
+    backgroundColor: "#007AFF",
+    padding: 15,
+    borderRadius: 8,
+    width: "100%",
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "600",
   },
   reactLogo: {
     height: 178,
