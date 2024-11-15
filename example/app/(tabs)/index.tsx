@@ -1,46 +1,34 @@
-import { HelloWave } from "@/components/HelloWave";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
-import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
-import { BugzzApp } from "@henrypl/bugzzapp-sdk";
-import {
-  Button,
-  Image,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  View
-} from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function HomeScreen() {
   const triggerTypeError = () => {
-      // Trying to call a method on undefined
-      const user = undefined;
-      user.getName();
-    };
+    // Trying to call a method on undefined
+    const user = undefined;
+    user.getName();
+  };
 
-    const triggerReferenceError = () => {
-      // Trying to call an undefined function
-      nonExistentFunction();
-    };
+  const triggerReferenceError = () => {
+    // Trying to call an undefined function
+    nonExistentFunction();
+  };
 
-    const triggerPromiseError = async () => {
-      // Throwing an error in a promise
-      new Promise((resolve, reject) => {
-        reject(new Error('Async operation failed'));
-      });
-    };
+  const triggerPromiseError = async () => {
+    // Throwing an error in a promise
+    new Promise((resolve, reject) => {
+      reject(new Error("Async operation failed"));
+    });
+  };
 
-    const triggerCustomError = () => {
-      // Throwing a custom error
-      throw new Error('This is a custom error message');
-    };
+  const triggerCustomError = () => {
+    // Throwing a custom error
+    throw new Error("This is a custom error message");
+  };
 
-    const triggerRangeError = () => {
-      // Creating an array with invalid length
-      new Array(-1);
-    };
+  const triggerRangeError = () => {
+    // Creating an array with invalid length
+    new Array(-1);
+  };
 
   return (
     <ParallaxScrollView
