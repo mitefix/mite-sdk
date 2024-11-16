@@ -1,16 +1,18 @@
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { BugzzAppSDK } from "@bugzzapp/sdk";
 
 export default function HomeScreen() {
+
   const triggerTypeError = () => {
     // Trying to call a method on undefined
     const user = undefined;
-    user.getName();
+    // user.getName();
   };
 
   const triggerReferenceError = () => {
     // Trying to call an undefined function
-    nonExistentFunction();
+    // nonExistentFunction();
   };
 
   const triggerPromiseError = async () => {
@@ -41,6 +43,7 @@ export default function HomeScreen() {
       }
     >
       <View style={styles.container}>
+        <Text style={styles.title}>{BugzzAppSDK.hello}</Text>
         <Text style={styles.title}>Error Testing App</Text>
 
         <Pressable style={styles.button} onPress={triggerTypeError}>

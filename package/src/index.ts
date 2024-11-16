@@ -2,10 +2,10 @@
 
 import { NitroModules } from "react-native-nitro-modules";
 export * from "./specs/BugzzAppSDK.nitro";
-import type { BugzzAppSDK } from "./specs/BugzzAppSDK.nitro";
+import type { BugzzAppSDK as BugzzAppSDKType } from "./specs/BugzzAppSDK.nitro";
 import { BugzzApp } from "./BugzzApp";
 
-export const bugzzApp = NitroModules.createHybridObject<BugzzAppSDK>("BugzzAppSDK")
-console.log('NITRO MODULE->', bugzzApp.hello)
+export const BugzzAppSDK = NitroModules.createHybridObject<BugzzAppSDKType>("BugzzAppSDK")
 
 export { BugzzApp }
+export * from './types'
