@@ -9,7 +9,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import "react-native-reanimated";
-import { BugzzApp } from "@henrypl/bugzzapp-sdk";
+import { BugzzApp } from "@bugzzapp/sdk";
 
 const bugzzApp = new BugzzApp({
   publicKey:

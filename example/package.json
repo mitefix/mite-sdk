@@ -55,5 +55,14 @@
     "react-test-renderer": "18.3.1",
     "typescript": "^5.3.3"
   },
-  "private": true
+  "private": true,
+  "expo": {
+    "autolinking": {
+      "nativeModulesDir": "../node_modules",
+      "searchPaths": [
+        "../node_modules",
+        "..packages"
+      ]
+    }
+  }
 }

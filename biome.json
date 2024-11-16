@@ -9,7 +9,9 @@
     "lineWidth": 80,
     "attributePosition": "auto"
   },
-  "organizeImports": { "enabled": true },
+  "organizeImports": {
+    "enabled": true
+  },
   "linter": {
     "enabled": true,
     "rules": {
@@ -34,6 +36,15 @@
     }
   },
   "files": {
-    "include": ["src/**/*.js", "src/**/*.jsx", "*.ts", "*.tsx"]
+    "include": [
+      "**/*.ts",
+      "**/*.tsx",
+      "**/*.js",
+      "**/*.jsx",
+      "*.ts",
+      "*.tsx",
+      "example/**/*.ts",
+      "example/**/*.tsx"
+    ]
   }
 }

@@ -11,7 +11,7 @@
 #include <fbjni/fbjni.h>
 #include <NitroModules/HybridObjectRegistry.hpp>
 
-
+#include "HybridBugzzAppSDK.hpp"
 
 namespace margelo::nitro::bugzzapp {
 
@@ -25,7 +25,15 @@ int initialize(JavaVM* vm) {
     
 
     // Register Nitro Hybrid Objects
-    
+    HybridObjectRegistry::registerHybridObjectConstructor(
+      "BugzzAppSDK",
+      []() -> std::shared_ptr<HybridObject> {
+        static_assert(std::is_default_constructible_v<HybridBugzzAppSDK>,
+                      "The HybridObject \"HybridBugzzAppSDK\" is not default-constructible! "
+                      "Create a public constructor that takes zero arguments to be able to autolink this HybridObject.");
+        return std::make_shared<HybridBugzzAppSDK>();
+      }
+    );
   });
 }
 
