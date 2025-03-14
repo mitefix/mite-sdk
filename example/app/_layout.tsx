@@ -5,18 +5,16 @@ import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
 import { useEffect } from 'react'
 import 'react-native-reanimated'
+import { useColorScheme } from '@/hooks/useColorScheme'
 import { Mite } from '@mite/mite-sdk'
 
 const mite = new Mite({
-  publicKey: 'pk_105e933bcd6f777c4d0d04a31d85e6861ae94060e190d0c05fcc980fbe5d4091',
-  appId: '3060c5c0-452d-490b-a7ff-bc3eb17312ac',
+  publicKey: 'pk_5cb9a24892789672c2218cf07c963aeec0994a43ebd8efff125cbc8b86c46567',
+  appId: '058fbfa1-05bb-4b25-bafb-1870d5d7b114',
 })
 
 mite.init()
 
-import { useColorScheme } from '@/hooks/useColorScheme'
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()
 
 export default function RootLayout() {
