@@ -11,7 +11,7 @@
 #include <fbjni/fbjni.h>
 #include <NitroModules/HybridObjectRegistry.hpp>
 
-#include "HybridMite.hpp"
+#include "HybridMiteSDK.hpp"
 
 namespace margelo::nitro::mite {
 
@@ -26,12 +26,12 @@ int initialize(JavaVM* vm) {
 
     // Register Nitro Hybrid Objects
     HybridObjectRegistry::registerHybridObjectConstructor(
-      "Mite",
+      "MiteSDK",
       []() -> std::shared_ptr<HybridObject> {
-        static_assert(std::is_default_constructible_v<HybridMite>,
-                      "The HybridObject \"HybridMite\" is not default-constructible! "
+        static_assert(std::is_default_constructible_v<HybridMiteSDK>,
+                      "The HybridObject \"HybridMiteSDK\" is not default-constructible! "
                       "Create a public constructor that takes zero arguments to be able to autolink this HybridObject.");
-        return std::make_shared<HybridMite>();
+        return std::make_shared<HybridMiteSDK>();
       }
     );
   });

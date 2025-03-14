@@ -12,8 +12,8 @@
     "androidCxxLibName": "MiteSDK"
   },
   "autolinking": {
-    "Mite": {
-      "cpp": "HybridMite"
+    "MiteSDK": {
+      "cpp": "HybridMiteSDK"
     }
   },
   "ignorePaths": [
