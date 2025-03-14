@@ -5,7 +5,6 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
-    "bootstrap": "bun --filter=\"**\" install && bun tsc && bun --filter=\"in-browser-app-example\" pods",
     "typescript": "bun --filter=\"**\" typescript",
     "clean": "rm -rf package/tsconfig.tsbuildinfo package/node_modules package/lib",
     "spec": "cd package && bun specs && cd .."
