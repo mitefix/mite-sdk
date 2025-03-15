@@ -1,7 +1,8 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig } from 'axios'
 
+const BASE_URL = 'http://localhost:8787'
+
 export interface ApiClientOptions {
-  baseURL: string
   timeout?: number
   maxRetries?: number
   headers?: Record<string, string>
@@ -16,8 +17,8 @@ export class ApiClient {
 
   private constructor(options: ApiClientOptions) {
     this.client = axios.create({
-      baseURL: options.baseURL,
-      timeout: options.timeout || 10000,
+      baseURL: BASE_URL,
+      timeout: options.timeout ?? 10000,
       headers: {
         'Content-Type': 'application/json',
         ...options.headers
@@ -57,7 +58,7 @@ export class ApiClient {
     } else if (!ApiClient.instance) {
       throw new Error('[Mite] ApiClient must be initialized with options first')
     }
-    
+
     return ApiClient.instance
   }
 
@@ -102,7 +103,7 @@ export class ApiClient {
   /**
    * Send a GET request
    */
-  public async get<T = any>(url: string, config?: AxiosRequestConfig): Promise<T> {
+  public async get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.client.get<T>(url, config)
     return response.data
   }
@@ -110,7 +111,7 @@ export class ApiClient {
   /**
    * Send a POST request
    */
-  public async post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  public async post<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.client.post<T>(url, data, config)
     return response.data
   }
@@ -118,7 +119,7 @@ export class ApiClient {
   /**
    * Send a PUT request
    */
-  public async put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  public async put<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.client.put<T>(url, data, config)
     return response.data
   }
@@ -126,7 +127,7 @@ export class ApiClient {
   /**
    * Send a DELETE request
    */
-  public async delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<T> {
+  public async delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.client.delete<T>(url, config)
     return response.data
   }
