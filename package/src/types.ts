@@ -1,4 +1,5 @@
 import type Device from 'expo-device'
+import type { ApiClient } from './utils/client'
 
 export interface MiteConfig {
   appId: string
@@ -8,14 +9,20 @@ export interface MiteConfig {
   retries?: number
 }
 
-export interface ApiClientConfig {
-  appId: string
-  publicKey: string
-  endpoint?: string
-  timeout?: number
-  retries?: number
+export interface ErrorReportConfig {
+  miteConfig: MiteConfig
   deviceInfo: typeof Device
+  apiClient: ApiClient
 }
+
+// export interface ApiClientConfig {
+//   appId: string
+//   publicKey: string
+//   endpoint?: string
+//   timeout?: number
+//   retries?: number
+//   deviceInfo: typeof Device
+// }
 
 export interface ErrorReport {
   timestamp: string
