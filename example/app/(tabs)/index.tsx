@@ -1,6 +1,6 @@
 import ParallaxScrollView from '@/components/ParallaxScrollView'
 import { MiteSDK } from '@mite/mite-sdk'
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native'
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 
 export default function HomeScreen() {
   const triggerTypeError = () => {
@@ -45,25 +45,25 @@ export default function HomeScreen() {
         <Text style={styles.title}>{MiteSDK.hello}</Text>
         <Text style={styles.title}>Error Testing App</Text>
 
-        <Pressable style={styles.button} onPress={triggerTypeError}>
+        <TouchableOpacity style={styles.button} onPress={triggerTypeError}>
           <Text style={styles.buttonText}>Trigger TypeError</Text>
-        </Pressable>
+        </TouchableOpacity>
 
-        <Pressable style={styles.button} onPress={triggerReferenceError}>
+        <TouchableOpacity style={styles.button} onPress={triggerReferenceError}>
           <Text style={styles.buttonText}>Trigger ReferenceError</Text>
-        </Pressable>
+        </TouchableOpacity>
 
-        <Pressable style={styles.button} onPress={triggerPromiseError}>
+        <TouchableOpacity style={styles.button} onPress={triggerPromiseError}>
           <Text style={styles.buttonText}>Trigger Promise Rejection</Text>
-        </Pressable>
+        </TouchableOpacity>
 
-        <Pressable style={styles.button} onPress={triggerCustomError}>
+        <TouchableOpacity style={styles.button} onPress={triggerCustomError}>
           <Text style={styles.buttonText}>Trigger Custom Error</Text>
-        </Pressable>
+        </TouchableOpacity>
 
-        <Pressable style={styles.button} onPress={triggerRangeError}>
+        <TouchableOpacity style={styles.button} onPress={triggerRangeError}>
           <Text style={styles.buttonText}>Trigger RangeError</Text>
-        </Pressable>
+        </TouchableOpacity>
       </View>
     </ParallaxScrollView>
   )
