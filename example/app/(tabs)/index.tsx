@@ -1,5 +1,5 @@
 import ParallaxScrollView from '@/components/ParallaxScrollView'
-import { MiteSDK, useMite } from '@mite/mite-sdk'
+import { useMite } from '@mite/mite-sdk'
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 
 export default function HomeScreen() {
@@ -7,12 +7,12 @@ export default function HomeScreen() {
   const triggerTypeError = () => {
     // Trying to call a method on undefined
     const user = undefined
-    // user.getName();
+    user.getName()
   }
 
   const triggerReferenceError = () => {
     // Trying to call an undefined function
-    // nonExistentFunction();
+    nonExistentFunction()
   }
 
   const triggerPromiseError = async () => {
@@ -30,6 +30,20 @@ export default function HomeScreen() {
   const triggerRangeError = () => {
     // Creating an array with invalid length
     new Array(-1)
+  }
+
+  // This will trigger a native crash that will be caught by our native crash handlers
+  const triggerNativeCrash = () => {
+    // This creates a segmentation fault in native code
+    // WARNING: This will actually crash the app!
+    // Access memory address 0, which will cause a segmentation fault
+    // const array = new Int32Array(1)
+    // @ts-ignore - Intentionally causing a crash
+    // array[0xffffffff] = 0
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    console.log('called')
+
+    test.should?.crash()
   }
 
   const reportBug = async () => {
@@ -56,7 +70,6 @@ export default function HomeScreen() {
       }
     >
       <View style={styles.container}>
-        <Text style={styles.title}>{MiteSDK.hello}</Text>
         <Text style={styles.title}>Error Testing App</Text>
 
         <TouchableOpacity style={styles.button} onPress={triggerTypeError}>
@@ -77,6 +90,12 @@ export default function HomeScreen() {
 
         <TouchableOpacity style={styles.button} onPress={triggerRangeError}>
           <Text style={styles.buttonText}>Trigger RangeError</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: '#FF3B30' }]}
+          onPress={triggerNativeCrash}
+        >
+          <Text style={styles.buttonText}>Trigger Native Crash</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.button} onPress={reportBug}>
           <Text style={styles.buttonText}>Report Bug</Text>
