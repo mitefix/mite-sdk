@@ -1,8 +1,9 @@
 import ParallaxScrollView from '@/components/ParallaxScrollView'
-import { MiteSDK } from '@mite/mite-sdk'
+import { MiteSDK, useMite } from '@mite/mite-sdk'
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 
 export default function HomeScreen() {
+  const mite = useMite()
   const triggerTypeError = () => {
     // Trying to call a method on undefined
     const user = undefined
@@ -29,6 +30,19 @@ export default function HomeScreen() {
   const triggerRangeError = () => {
     // Creating an array with invalid length
     new Array(-1)
+  }
+
+  const reportBug = async () => {
+    // Capture a bug and send it to the server
+    console.log('hello')
+
+    await mite.submitBug({
+      title: 'Bug Title',
+      description: 'Bug Description',
+      stepsToReproduce: 'Steps to reproduce',
+      expectedBehavior: 'Expected behavior',
+      actualBehavior: 'Actual behavior',
+    })
   }
 
   return (
@@ -63,6 +77,9 @@ export default function HomeScreen() {
 
         <TouchableOpacity style={styles.button} onPress={triggerRangeError}>
           <Text style={styles.buttonText}>Trigger RangeError</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={reportBug}>
+          <Text style={styles.buttonText}>Report Bug</Text>
         </TouchableOpacity>
       </View>
     </ParallaxScrollView>

@@ -6,11 +6,11 @@ import { StatusBar } from 'expo-status-bar'
 import { useEffect } from 'react'
 import 'react-native-reanimated'
 import { useColorScheme } from '@/hooks/useColorScheme'
-import { Mite } from '@mite/mite-sdk'
+import { Mite, MiteProvider } from '@mite/mite-sdk'
 
 const mite = new Mite({
-  publicKey: 'pk_5cb9a24892789672c2218cf07c963aeec0994a43ebd8efff125cbc8b86c46567',
-  appId: '058fbfa1-05bb-4b25-bafb-1870d5d7b114',
+  publicKey: 'pk_948498c3812af4d2783a3795bde5e30e0ed4cd253fec10210b63e7e6bd716f0e',
+  appId: '1452b424-113b-42a5-a2ab-eb713389733e',
 })
 
 mite.init()
@@ -34,12 +34,14 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <MiteProvider miteInstance={mite}>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    </MiteProvider>
   )
 }
