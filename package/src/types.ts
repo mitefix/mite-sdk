@@ -45,6 +45,45 @@ export interface Reporter {
 }
 
 export interface ErrorReporterInterface extends Reporter {
-  captureError(error: Error | Record<string, unknown>, additionalInfo?: Record<string, unknown>): Promise<void>
+  captureError(
+    error: Error | Record<string, unknown>,
+    additionalInfo?: Record<string, unknown>,
+  ): Promise<void>
   logError(error: Error, metadata?: Record<string, unknown>): Promise<void>
+}
+
+export interface SubmitBugReportPayload {
+  title: string
+  description: string
+  userIdentifier?: string // App's user ID
+  reporterName?: string // Name of person reporting the bug
+  reporterEmail?: string // Email of person reporting the bug
+  stepsToReproduce?: string
+  expectedBehavior?: string
+  actualBehavior?: string
+  priority?: 'low' | 'medium' | 'high' // Defaults to 'medium'
+  appVersion?: string // Version of the app
+  deviceInfo?: {
+    // Device information as JSON
+    os?: string
+    osVersion?: string
+    device?: string
+    manufacturer?: string
+    model?: string
+    screenWidth?: number
+    screenHeight?: number
+    batteryLevel?: number
+    isCharging?: boolean
+    connectivity?: string // wifi, cellular, etc.
+    [key: string]: unknown // Allow for custom device info
+  }
+
+  // Environment information as JSON
+  // environment?: {
+  //   buildType?: 'debug' | 'release' | 'beta'
+  //   locale?: string
+  //   timezone?: string
+  //   userAgent?: string
+  //   [key: string]: any // Allow for custom environment info
+  // }
 }
