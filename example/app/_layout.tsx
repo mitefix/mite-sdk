@@ -1,16 +1,19 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
+} from '@react-navigation/native'
 import { useFonts } from 'expo-font'
 import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
 import { useEffect } from 'react'
 import 'react-native-reanimated'
-import { useColorScheme } from '@/hooks/useColorScheme'
 import { Mite, MiteProvider } from '@mite/mite-sdk'
 
 const mite = new Mite({
-  publicKey: 'pk_5fe26cc2a837e5ed2a3ba9e9e84b8258c6e1cdd23160d2539be44197d8beaa02',
-  appId: '528dbec6-6cee-4d05-a173-9175ef27554d',
+  publicKey: process.env.EXPO_PUBLIC_MITE_KEY!,
+  appId: '5c0c7fbf-54f9-417c-8bfe-4e9b04596f4d',
 })
 
 mite.init()
