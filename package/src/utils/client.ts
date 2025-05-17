@@ -1,6 +1,6 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig } from 'axios'
 
-const BASE_URL = 'http://localhost:8787'
+const BASE_URL = 'http://localhost:3000'
 
 export interface ApiClientOptions {
   timeout?: number
@@ -21,8 +21,8 @@ export class ApiClient {
       timeout: options.timeout ?? 10000,
       headers: {
         'Content-Type': 'application/json',
-        ...options.headers
-      }
+        ...options.headers,
+      },
     })
 
     // Setup response interceptor for error handling
@@ -32,7 +32,7 @@ export class ApiClient {
         if (error.response) {
           console.error('[Mite] Server error:', {
             status: error.response.status,
-            data: error.response.data
+            data: error.response.data,
           })
         } else if (error.request) {
           console.error('[Mite] Network error:', error.message)
@@ -40,7 +40,7 @@ export class ApiClient {
           console.error('[Mite] Request setup error:', error.message)
         }
         return Promise.reject(error)
-      }
+      },
     )
 
     // Setup retries if configured
@@ -78,11 +78,11 @@ export class ApiClient {
         }
 
         retryCount += 1
-        const backoff = Math.min(1000 * (2 ** retryCount), 10000)
+        const backoff = Math.min(1000 * 2 ** retryCount, 10000)
         await new Promise(resolve => setTimeout(resolve, backoff))
 
         return this.client(config)
-      }
+      },
     )
   }
 
@@ -103,7 +103,10 @@ export class ApiClient {
   /**
    * Send a GET request
    */
-  public async get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> {
+  public async get<T = unknown>(
+    url: string,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
     const response = await this.client.get<T>(url, config)
     return response.data
   }
@@ -111,7 +114,11 @@ export class ApiClient {
   /**
    * Send a POST request
    */
-  public async post<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
+  public async post<T = unknown>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
     const response = await this.client.post<T>(url, data, config)
     return response.data
   }
@@ -119,7 +126,11 @@ export class ApiClient {
   /**
    * Send a PUT request
    */
-  public async put<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
+  public async put<T = unknown>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
     const response = await this.client.put<T>(url, data, config)
     return response.data
   }
@@ -127,7 +138,10 @@ export class ApiClient {
   /**
    * Send a DELETE request
    */
-  public async delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> {
+  public async delete<T = unknown>(
+    url: string,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
     const response = await this.client.delete<T>(url, config)
     return response.data
   }
@@ -138,13 +152,13 @@ export class ApiClient {
  */
 export function createSupabaseClient(
   supabaseKey: string,
-  options: Omit<ApiClientOptions, 'baseURL'> = {}
+  options: Omit<ApiClientOptions, 'baseURL'> = {},
 ): ApiClient {
   return ApiClient.getInstance({
     headers: {
-      'apikey': supabaseKey,
-      'Authorization': `Bearer ${supabaseKey}`
+      apikey: supabaseKey,
+      Authorization: `Bearer ${supabaseKey}`,
     },
-    ...options
+    ...options,
   })
 }

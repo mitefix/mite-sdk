@@ -56,14 +56,14 @@ export interface SubmitBugReportPayload {
   title: string
   description: string
   userIdentifier?: string // App's user ID
-  reporterName?: string // Name of person reporting the bug
-  reporterEmail?: string // Email of person reporting the bug
-  stepsToReproduce?: string
-  expectedBehavior?: string
-  actualBehavior?: string
+  reporter_name?: string // Name of person reporting the bug
+  reporter_email?: string // Email of person reporting the bug
+  steps_to_reproduce?: string
+  expected_behavior?: string
+  actual_behavior?: string
   priority?: 'low' | 'medium' | 'high' // Defaults to 'medium'
-  appVersion?: string // Version of the app
-  deviceInfo?: {
+  app_version?: string // Version of the app
+  device_info?: {
     // Device information as JSON
     os?: string
     osVersion?: string

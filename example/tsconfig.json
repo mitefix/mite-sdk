@@ -4,21 +4,10 @@
     "strict": true,
     "jsx": "react-jsx",
     "paths": {
-      "@/*": [
-        "./*"
-      ],
-      "@mite/mite-sdk": [
-        "../src/index"
-      ],
-      "@mite/mite-sdk/*": [
-        "../src/*"
-      ]
+      "@/*": ["./*"],
+      "@mite/mite-sdk": ["../package/src/index"],
+      "@mite/mite-sdk/*": ["../package/src/*"]
     }
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    ".expo/types/**/*.ts",
-    "expo-env.d.ts"
-  ]
+  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
 }

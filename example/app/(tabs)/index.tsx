@@ -7,11 +7,13 @@ export default function HomeScreen() {
   const triggerTypeError = () => {
     // Trying to call a method on undefined
     const user = undefined
+    // @ts-expect-error
     user.getName()
   }
 
   const triggerReferenceError = () => {
     // Trying to call an undefined function
+    // @ts-expect-error
     nonExistentFunction()
   }
 
@@ -40,9 +42,9 @@ export default function HomeScreen() {
     // const array = new Int32Array(1)
     // @ts-ignore - Intentionally causing a crash
     // array[0xffffffff] = 0
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     console.log('called')
 
+    // @ts-expect-error
     test.should?.crash()
   }
 
@@ -53,9 +55,9 @@ export default function HomeScreen() {
     await mite.submitBug({
       title: 'Bug Title',
       description: 'Bug Description',
-      stepsToReproduce: 'Steps to reproduce',
-      expectedBehavior: 'Expected behavior',
-      actualBehavior: 'Actual behavior',
+      steps_to_reproduce: 'Steps to reproduce',
+      expected_behavior: 'Expected behavior',
+      actual_behavior: 'Actual behavior',
     })
   }
 

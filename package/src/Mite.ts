@@ -3,7 +3,11 @@ import { NitroModules } from 'react-native-nitro-modules'
 import { BugReporter } from './BugReporter'
 import { ErrorReporter } from './ErrorReporter'
 import type { MiteSDK as MiteSDKType } from './specs/MiteSDK.nitro'
-import type { ErrorReporterInterface, MiteConfig, SubmitBugReportPayload } from './types'
+import type {
+  ErrorReporterInterface,
+  MiteConfig,
+  SubmitBugReportPayload,
+} from './types'
 import { ApiClient } from './utils/client'
 
 export const MiteSDK = NitroModules.createHybridObject<MiteSDKType>('MiteSDK')
@@ -23,7 +27,7 @@ export class Mite {
       maxRetries: config.retries,
       headers: {
         'x-app-public-key': config.publicKey,
-        'X-SDK-Version': '1.0.0',
+        'x-app-id': config.appId,
       },
     })
     this.errorReporter = new ErrorReporter({
@@ -97,7 +101,9 @@ export class Mite {
    * @param payload
    * @returns
    */
-  async submitBug(payload: Omit<SubmitBugReportPayload, 'appId' | 'deviceInfo'>) {
+  async submitBug(
+    payload: Omit<SubmitBugReportPayload, 'appId' | 'deviceInfo'>,
+  ) {
     return this.bugReporter.sendBugReportToServer(payload)
   }
 
