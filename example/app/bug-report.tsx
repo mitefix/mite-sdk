@@ -82,8 +82,6 @@ export default function BugReportScreen() {
     setLoading(true)
 
     try {
-      // console.log(formData)
-
       await mite.submitBug({
         title: formData.title,
         description: formData.description,
@@ -94,16 +92,16 @@ export default function BugReportScreen() {
         actual_behavior: formData.actualBehavior || undefined,
         priority: formData.priority,
       })
-      // Alert.alert(
-      //   'Bug Report Submitted',
-      //   'Thank you for reporting this bug. Our team will review it shortly.',
-      //   [
-      //     {
-      //       text: 'OK',
-      //       onPress: () => router.back(),
-      //     },
-      //   ],
-      // )
+      Alert.alert(
+        'Bug Report Submitted',
+        'Thank you for reporting this bug. Our team will review it shortly.',
+        [
+          {
+            text: 'OK',
+            onPress: () => router.back(),
+          },
+        ],
+      )
     } catch (error) {
       console.error('[Mite] Failed to submit bug report:', error)
       Alert.alert(

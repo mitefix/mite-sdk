@@ -59,7 +59,6 @@ export default function HomeScreen() {
 
   const reportBug = async () => {
     // Capture a bug and send it to the server
-    console.log('hello')
     router.navigate('/bug-report')
 
     // await mite.submitBug({
