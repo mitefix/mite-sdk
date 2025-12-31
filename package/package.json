@@ -1,5 +1,5 @@
 {
-  "name": "@mite/mite-sdk",
+  "name": "@usemite/mite-sdk",
   "version": "0.0.0-alpha.1",
   "description": "A template for Nitro Modules.",
   "main": "lib/index",
