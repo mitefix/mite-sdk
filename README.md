@@ -12,14 +12,6 @@ yarn add @mite/mite-sdk
 bun add @mite/mite-sdk
 ```
 
-### Peer Dependencies
-
-Make sure you have these installed in your project:
-
-```bash
-npm install expo-constants expo-device react-native-nitro-modules
-```
-
 ## Setup
 
 ### 1. Initialize Mite
