@@ -1,6 +1,6 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig } from 'axios'
 
-const BASE_URL = 'https://hallowed-armadillo-23.convex.site'
+const BASE_URL = 'https://intent-okapi-412.convex.site'
 
 export interface ApiClientOptions {
   timeout?: number
