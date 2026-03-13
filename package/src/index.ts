@@ -1,9 +1,8 @@
 import { Mite } from './Mite'
 import { MiteProvider, useMite } from './MiteProvider'
 import { useReleases } from './useReleases'
-import { ApiClient } from './utils/client'
 
-export { Mite, ApiClient, MiteProvider, useMite, useReleases }
+export { Mite, MiteProvider, useMite, useReleases }
 export type {
   MiteConfig,
   Release,
