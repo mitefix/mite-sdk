@@ -1,23 +1,27 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig } from 'axios'
 
-const BASE_URL = 'https://intent-okapi-412.convex.site'
+const DEFAULT_BASE_URL = 'https://intent-okapi-412.convex.site'
+const RETRY_COUNT_HEADER = '__mite_retry_count'
 
 export interface ApiClientOptions {
+  baseUrl?: string
   timeout?: number
   maxRetries?: number
   headers?: Record<string, string>
 }
 
 /**
- * Creates a configured axios client for making API requests to Supabase
+ * HTTP client for making API requests to the Mite backend.
  */
 export class ApiClient {
-  private static instance: ApiClient
   private client: AxiosInstance
+  private maxRetries: number
 
-  private constructor(options: ApiClientOptions) {
+  constructor(options: ApiClientOptions) {
+    this.maxRetries = options.maxRetries ?? 0
+
     this.client = axios.create({
-      baseURL: BASE_URL,
+      baseURL: options.baseUrl ?? DEFAULT_BASE_URL,
       timeout: options.timeout ?? 10000,
       headers: {
         'Content-Type': 'application/json',
@@ -25,7 +29,6 @@ export class ApiClient {
       },
     })
 
-    // Setup response interceptor for error handling
     this.client.interceptors.response.use(
       response => response,
       error => {
@@ -43,42 +46,25 @@ export class ApiClient {
       },
     )
 
-    // Setup retries if configured
-    if (options.maxRetries && options.maxRetries > 0) {
-      this.setupRetry(options.maxRetries)
+    if (this.maxRetries > 0) {
+      this.setupRetry()
     }
   }
 
-  /**
-   * Gets the singleton instance of ApiClient, creating it if necessary
-   */
-  public static getInstance(options?: ApiClientOptions): ApiClient {
-    if (!ApiClient.instance && options) {
-      ApiClient.instance = new ApiClient(options)
-    } else if (!ApiClient.instance) {
-      throw new Error('[Mite] ApiClient must be initialized with options first')
-    }
-
-    return ApiClient.instance
-  }
-
-  /**
-   * Setup retry logic for failed requests
-   */
-  private setupRetry(maxRetries: number): void {
-    let retryCount = 0
-
+  private setupRetry(): void {
     this.client.interceptors.response.use(
       response => response,
       async error => {
         const config = error.config
+        if (!config) return Promise.reject(error)
 
-        if (!config || retryCount >= maxRetries) {
+        const retryCount = (config[RETRY_COUNT_HEADER] as number) ?? 0
+        if (retryCount >= this.maxRetries) {
           return Promise.reject(error)
         }
 
-        retryCount += 1
-        const backoff = Math.min(1000 * 2 ** retryCount, 10000)
+        config[RETRY_COUNT_HEADER] = retryCount + 1
+        const backoff = Math.min(1000 * 2 ** (retryCount + 1), 10000)
         await new Promise<void>(resolve => setTimeout(resolve, backoff))
 
         return this.client(config)
@@ -86,31 +72,19 @@ export class ApiClient {
     )
   }
 
-  /**
-   * Gets the underlying axios instance
-   */
   public getAxiosInstance(): AxiosInstance {
     return this.client
   }
 
-  /**
-   * Update headers for the client
-   */
   public updateHeaders(headers: Record<string, string>): void {
     Object.assign(this.client.defaults.headers.common, headers)
   }
 
-  /**
-   * Send a GET request
-   */
   public async get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.client.get<T>(url, config)
     return response.data
   }
 
-  /**
-   * Send a POST request
-   */
   public async post<T = unknown>(
     url: string,
     data?: unknown,
@@ -120,9 +94,6 @@ export class ApiClient {
     return response.data
   }
 
-  /**
-   * Send a PUT request
-   */
   public async put<T = unknown>(
     url: string,
     data?: unknown,
@@ -132,27 +103,8 @@ export class ApiClient {
     return response.data
   }
 
-  /**
-   * Send a DELETE request
-   */
   public async delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.client.delete<T>(url, config)
     return response.data
   }
-}
-
-/**
- * Create a supabase-specific client with the provided credentials
- */
-export function createSupabaseClient(
-  supabaseKey: string,
-  options: Omit<ApiClientOptions, 'baseURL'> = {},
-): ApiClient {
-  return ApiClient.getInstance({
-    headers: {
-      apikey: supabaseKey,
-      Authorization: `Bearer ${supabaseKey}`,
-    },
-    ...options,
-  })
 }

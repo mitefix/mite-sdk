@@ -1,26 +1,8 @@
-// import type * as ImagePicker from 'expo-image-picker'
 import { type PropsWithChildren, useState } from 'react'
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 
 export function BugReport({ children }: PropsWithChildren) {
   const [visible, setVisible] = useState(false)
-  // const [, setImages] = useState<Array<ImagePicker.ImagePickerAsset> | null>(null)
-
-  // const pickImages = async () => {
-  //   // No permissions request is necessary for launching the image library
-  //   const result = await ImagePicker.launchImageLibraryAsync({
-  //     mediaTypes: ['images', 'videos'],
-  //     allowsEditing: true,
-  //     aspect: [4, 3],
-  //     quality: 1,
-  //   })
-
-  //   console.log(result)
-
-  //   if (!result.canceled) {
-  //     setImages(result.assets)
-  //   }
-  // }
 
   return (
     <>
