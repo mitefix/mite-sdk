@@ -46,11 +46,13 @@ export class BugReporter {
   ): Promise<SubmitBugReportResponse> {
     const { attachments: localAttachments, ...rest } = payload
 
-    let attachments: Array<{
-      storage_id: string
-      file_type?: string
-      file_name?: string
-    }> | undefined
+    let attachments:
+      | Array<{
+          storage_id: string
+          file_type?: string
+          file_name?: string
+        }>
+      | undefined
 
     if (localAttachments && localAttachments.length > 0) {
       attachments = []
@@ -69,13 +71,10 @@ export class BugReporter {
       }
     }
 
-    return this.apiClient.post<SubmitBugReportResponse>(
-      '/api/v1/bug-reports',
-      {
-        device_info: this.deviceInfo,
-        ...rest,
-        attachments,
-      },
-    )
+    return this.apiClient.post<SubmitBugReportResponse>('/api/v1/bug-reports', {
+      device_info: this.deviceInfo,
+      ...rest,
+      attachments,
+    })
   }
 }

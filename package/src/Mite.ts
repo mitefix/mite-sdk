@@ -2,6 +2,8 @@ import * as Device from 'expo-device'
 import { BugReporter } from './BugReporter'
 import type {
   GetReleasesOptions,
+  IdentifyUserPayload,
+  IdentifyUserResponse,
   MiteConfig,
   Release,
   ReleasesResponse,
@@ -69,6 +71,29 @@ export class Mite {
     payload: Omit<SubmitBugReportPayload, 'appId' | 'deviceInfo'>,
   ): Promise<SubmitBugReportResponse> {
     return this.bugReporter.sendBugReportToServer(payload)
+  }
+
+  /**
+   * Identify an end user in your application.
+   * At least one of user_identifier or anonymous_id is required.
+   */
+  async identify(payload: IdentifyUserPayload): Promise<IdentifyUserResponse> {
+    if (!this.apiKey) {
+      throw new Error(
+        '[Mite] API key is required to identify users. Please provide apiKey in MiteConfig.',
+      )
+    }
+
+    if (!payload.user_identifier && !payload.anonymous_id) {
+      throw new Error(
+        '[Mite] At least one of user_identifier or anonymous_id is required.',
+      )
+    }
+
+    return this.apiClient.post<IdentifyUserResponse>('/api/v1/identify', {
+      ...payload,
+      device_info: payload.device_info ?? this.deviceInfo,
+    })
   }
 
   /**
