@@ -47,3 +47,18 @@ export interface SubmitBugReportResponse {
   id: string
   status: 'OPEN'
 }
+
+export interface IdentifyUserPayload {
+  user_identifier?: string
+  anonymous_id?: string
+  email?: string
+  name?: string
+  device_info?: Record<string, unknown>
+  app_version?: string
+  metadata?: Record<string, unknown>
+}
+
+export interface IdentifyUserResponse {
+  id: string
+  created: boolean
+}

@@ -36,7 +36,6 @@
     "access": "public"
   },
   "peerDependencies": {
-    "expo-constants": "*",
     "expo-device": "*",
     "react": "*",
     "react-native": "*"

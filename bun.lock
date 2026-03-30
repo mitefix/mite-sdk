@@ -57,7 +57,7 @@
     },
     "package": {
       "name": "@usemite/mite-sdk",
-      "version": "0.0.5",
+      "version": "0.0.9",
       "dependencies": {
         "axios": "^1.13.2",
       },
@@ -69,7 +69,6 @@
         "release-it": "^19.0.4",
       },
       "peerDependencies": {
-        "expo-constants": "*",
         "expo-device": "*",
         "react": "*",
         "react-native": "*",
