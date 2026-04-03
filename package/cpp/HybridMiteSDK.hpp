@@ -20,12 +20,12 @@ namespace margelo::nitro::mite {
                     SIGSYS,     // Bad system call
                     SIGTRAP     // Trace trap
                 };
-                
+
                 // Resize oldHandlers to match registeredSignals
                 oldHandlers.resize(registeredSignals.size());
             }
         }
-        
+
         ~HybridMiteSDK() {
             // Make sure handlers are removed
             removeCrashHandlers();
@@ -44,8 +44,18 @@ namespace margelo::nitro::mite {
         static std::vector<struct sigaction> oldHandlers;
         static bool handlersInstalled;
         static void logCrashReport(int signal);
+        static void writeCrashToFile(int signal, const char* signalName, void** callstack, int frames);
+
+        // Path to write crash reports
+        static std::string crashReportDir;
 
     public:
         static const std::string hello;
+
+        /**
+         * Set the directory where crash reports are written.
+         * Must be called before installCrashHandlers.
+         */
+        static void setCrashReportDir(const std::string& dir);
     };
 }

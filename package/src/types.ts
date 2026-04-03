@@ -3,6 +3,27 @@ export interface MiteConfig {
   endpoint?: string
   timeout?: number
   retries?: number
+  /**
+   * Enable automatic JS error and promise rejection capturing.
+   * @default true
+   */
+  enableErrorTracking?: boolean
+  /**
+   * Enable offline request queuing for failed bug reports.
+   * @default true
+   */
+  enableOfflineQueue?: boolean
+  /**
+   * Called when an unhandled JS error or promise rejection is captured.
+   */
+  onError?: (error: Error, isFatal: boolean) => void
+}
+
+export interface CapturedError {
+  message: string
+  stack?: string
+  isFatal: boolean
+  timestamp: number
 }
 
 export type ReleasePlatform = 'ios' | 'android' | 'all'

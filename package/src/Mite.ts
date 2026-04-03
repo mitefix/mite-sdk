@@ -1,6 +1,9 @@
 import * as Device from 'expo-device'
 import { BugReporter } from './BugReporter'
+import { ErrorHandler } from './ErrorHandler'
+import { OfflineQueue } from './OfflineQueue'
 import type {
+  CapturedError,
   GetReleasesOptions,
   IdentifyUserPayload,
   IdentifyUserResponse,
@@ -48,8 +51,14 @@ export class Mite {
   private apiClient: ApiClient
   private bugReporter: BugReporter
   private apiKey?: string
+  private config: MiteConfig
+  private errorHandler: ErrorHandler | null = null
+  private offlineQueue: OfflineQueue | null = null
+  private capturedErrors: CapturedError[] = []
+  private initialized = false
 
   constructor(config: MiteConfig) {
+    this.config = config
     this.apiKey = config.apiKey
     this.deviceInfo = getDeviceInfo()
     this.apiClient = new ApiClient({
@@ -65,12 +74,72 @@ export class Mite {
   }
 
   /**
-   * Submit a bug report to the server
+   * Initialize the SDK. Sets up JS error tracking and offline queue.
+   * Call this once after creating the Mite instance.
+   */
+  init(): void {
+    if (this.initialized) {
+      console.warn('[Mite] SDK already initialized')
+      return
+    }
+
+    const enableErrorTracking = this.config.enableErrorTracking !== false
+    const enableOfflineQueue = this.config.enableOfflineQueue !== false
+
+    if (enableErrorTracking) {
+      this.errorHandler = new ErrorHandler((error: Error, isFatal: boolean) => {
+        this.handleCapturedError(error, isFatal)
+      })
+      this.errorHandler.install()
+      console.log('[Mite] JS error tracking enabled')
+    }
+
+    if (enableOfflineQueue) {
+      this.offlineQueue = new OfflineQueue(this.apiClient)
+      console.log('[Mite] Offline queue enabled')
+    }
+
+    this.initialized = true
+    console.log('[Mite] SDK initialized')
+  }
+
+  /**
+   * Tear down the SDK. Removes error handlers and clears queues.
+   */
+  destroy(): void {
+    if (this.errorHandler) {
+      this.errorHandler.uninstall()
+      this.errorHandler = null
+    }
+
+    if (this.offlineQueue) {
+      this.offlineQueue.destroy()
+      this.offlineQueue = null
+    }
+
+    this.capturedErrors = []
+    this.initialized = false
+  }
+
+  /**
+   * Submit a bug report to the server.
+   * If the request fails and offline queue is enabled, it will be retried.
    */
   async submitBug(
     payload: Omit<SubmitBugReportPayload, 'appId' | 'deviceInfo'>,
   ): Promise<SubmitBugReportResponse> {
-    return this.bugReporter.sendBugReportToServer(payload)
+    try {
+      return await this.bugReporter.sendBugReportToServer(payload)
+    } catch (err) {
+      if (this.offlineQueue && this.isNetworkError(err)) {
+        this.offlineQueue.enqueue('post', '/api/v1/bug-reports', {
+          device_info: this.deviceInfo,
+          ...payload,
+        })
+        console.log('[Mite] Bug report queued for retry')
+      }
+      throw err
+    }
   }
 
   /**
@@ -124,5 +193,68 @@ export class Mite {
     })
 
     return response.releases
+  }
+
+  /**
+   * Get all JS errors captured since last retrieval.
+   */
+  getCapturedErrors(): CapturedError[] {
+    return [...this.capturedErrors]
+  }
+
+  /**
+   * Clear captured errors buffer.
+   */
+  clearCapturedErrors(): void {
+    this.capturedErrors = []
+  }
+
+  /**
+   * Manually flush the offline queue.
+   */
+  async flushOfflineQueue(): Promise<void> {
+    if (this.offlineQueue) {
+      await this.offlineQueue.flush()
+    }
+  }
+
+  /**
+   * Get the number of pending requests in the offline queue.
+   */
+  get pendingRequestCount(): number {
+    return this.offlineQueue?.pendingCount ?? 0
+  }
+
+  private handleCapturedError(error: Error, isFatal: boolean): void {
+    const captured: CapturedError = {
+      message: error.message,
+      stack: error.stack,
+      isFatal,
+      timestamp: Date.now(),
+    }
+
+    this.capturedErrors.push(captured)
+
+    // Keep buffer bounded
+    if (this.capturedErrors.length > 50) {
+      this.capturedErrors = this.capturedErrors.slice(-50)
+    }
+
+    if (this.config.onError) {
+      this.config.onError(error, isFatal)
+    }
+
+    console.error(
+      `[Mite] Captured ${isFatal ? 'fatal' : 'non-fatal'} error:`,
+      error.message,
+    )
+  }
+
+  private isNetworkError(err: unknown): boolean {
+    if (err && typeof err === 'object' && 'code' in err) {
+      const code = (err as { code: string }).code
+      return code === 'ERR_NETWORK' || code === 'ECONNABORTED' || code === 'ETIMEDOUT'
+    }
+    return false
   }
 }
