@@ -29,6 +29,12 @@ export class ApiClient {
       },
     })
 
+    // Set up retry BEFORE error logging so retried requests
+    // don't produce spurious error logs
+    if (this.maxRetries > 0) {
+      this.setupRetry()
+    }
+
     this.client.interceptors.response.use(
       response => response,
       error => {
@@ -45,10 +51,6 @@ export class ApiClient {
         return Promise.reject(error)
       },
     )
-
-    if (this.maxRetries > 0) {
-      this.setupRetry()
-    }
   }
 
   private setupRetry(): void {

@@ -5,6 +5,7 @@ import { useReleases } from './useReleases'
 
 export { Mite, MiteProvider, useMite, useBugReport, useReleases }
 export type {
+  CapturedError,
   MiteConfig,
   Release,
   GetReleasesOptions,

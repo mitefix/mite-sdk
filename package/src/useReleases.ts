@@ -15,8 +15,9 @@ export interface UseReleasesResult {
 
 export function useReleases(options: UseReleasesOptions = {}): UseReleasesResult {
   const mite = useMite()
+  const { platform, limit, enabled = false } = options
   const [releases, setReleases] = useState<Release[]>([])
-  const [loading, setLoading] = useState(options.enabled ?? false)
+  const [loading, setLoading] = useState(enabled)
   const [error, setError] = useState<Error | null>(null)
 
   const fetchReleases = useCallback(async () => {
@@ -24,7 +25,7 @@ export function useReleases(options: UseReleasesOptions = {}): UseReleasesResult
     setError(null)
 
     try {
-      const data = await mite.getReleases(options)
+      const data = await mite.getReleases({ platform, limit })
       setReleases(data)
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to fetch releases')
@@ -33,13 +34,13 @@ export function useReleases(options: UseReleasesOptions = {}): UseReleasesResult
     } finally {
       setLoading(false)
     }
-  }, [mite, options])
+  }, [mite, platform, limit])
 
   useEffect(() => {
-    if (options.enabled) {
+    if (enabled) {
       fetchReleases()
     }
-  }, [options.enabled, fetchReleases])
+  }, [enabled, fetchReleases])
 
   return {
     releases,
