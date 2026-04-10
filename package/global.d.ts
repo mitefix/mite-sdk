@@ -1,1 +1,1 @@
-declare const RNErrorUtils: import('react-native').ErrorUtils;
+declare const RNErrorUtils: import('react-native').ErrorUtils

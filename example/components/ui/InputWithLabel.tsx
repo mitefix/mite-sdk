@@ -1,21 +1,29 @@
-import React from 'react';
-import { View, TextInput, StyleSheet, type TextInputProps } from 'react-native';
-import { ThemedText } from '../ThemedText';
-import { useThemeColor } from '@/hooks/useThemeColor';
+import React from 'react'
+import {
+  View,
+  TextInput,
+  StyleSheet,
+  type TextInputProps,
+  type StyleProp,
+  type ViewStyle,
+  type TextStyle,
+} from 'react-native'
+import { ThemedText } from '../ThemedText'
+import { useThemeColor } from '@/hooks/useThemeColor'
 
 export type InputWithLabelProps = TextInputProps & {
-  label: string;
-  error?: string;
-  lightColor?: string;
-  darkColor?: string;
-  lightBorderColor?: string;
-  darkBorderColor?: string;
-  containerStyle?: any;
-  labelStyle?: any;
-  inputStyle?: any;
-  errorStyle?: any;
-  required?: boolean;
-};
+  label: string
+  error?: string
+  lightColor?: string
+  darkColor?: string
+  lightBorderColor?: string
+  darkBorderColor?: string
+  containerStyle?: StyleProp<ViewStyle>
+  labelStyle?: StyleProp<TextStyle>
+  inputStyle?: StyleProp<TextStyle>
+  errorStyle?: StyleProp<TextStyle>
+  required?: boolean
+}
 
 export function InputWithLabel({
   label,
@@ -32,12 +40,12 @@ export function InputWithLabel({
   style,
   ...textInputProps
 }: InputWithLabelProps) {
-  const textColor = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
+  const textColor = useThemeColor({ light: lightColor, dark: darkColor }, 'text')
   const borderColor = useThemeColor(
     { light: lightBorderColor, dark: darkBorderColor },
-    'icon'
-  );
-  const placeholderColor = useThemeColor({}, 'icon');
+    'icon',
+  )
+  const placeholderColor = useThemeColor({}, 'icon')
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -45,7 +53,7 @@ export function InputWithLabel({
         {label}
         {required && <ThemedText style={styles.required}>*</ThemedText>}
       </ThemedText>
-      
+
       <TextInput
         style={[
           styles.input,
@@ -59,14 +67,10 @@ export function InputWithLabel({
         placeholderTextColor={placeholderColor}
         {...textInputProps}
       />
-      
-      {error && (
-        <ThemedText style={[styles.error, errorStyle]}>
-          {error}
-        </ThemedText>
-      )}
+
+      {error && <ThemedText style={[styles.error, errorStyle]}>{error}</ThemedText>}
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -94,4 +98,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 4,
   },
-});
+})
