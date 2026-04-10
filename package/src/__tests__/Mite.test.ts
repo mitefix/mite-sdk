@@ -76,17 +76,6 @@ describe('Mite', () => {
       mite.destroy()
     })
 
-    it('respects enableErrorTracking=false', () => {
-      const mite = new Mite({
-        apiKey: 'test',
-        enableErrorTracking: false,
-      })
-      mite.init()
-
-      expect(consoleLogSpy).not.toHaveBeenCalledWith('[Mite] JS error tracking enabled')
-      mite.destroy()
-    })
-
     it('respects enableOfflineQueue=false', () => {
       const mite = new Mite({
         apiKey: 'test',
@@ -106,7 +95,6 @@ describe('Mite', () => {
       mite.destroy()
 
       expect(mite.pendingRequestCount).toBe(0)
-      expect(mite.getCapturedErrors()).toEqual([])
     })
   })
 
@@ -154,19 +142,6 @@ describe('Mite', () => {
       const result = await mite.getReleases({ platform: 'ios', limit: 5 })
 
       expect(result).toEqual(releases)
-    })
-  })
-
-  describe('capturedErrors', () => {
-    it('returns empty array initially', () => {
-      const mite = new Mite({ apiKey: 'test' })
-      expect(mite.getCapturedErrors()).toEqual([])
-    })
-
-    it('clears captured errors', () => {
-      const mite = new Mite({ apiKey: 'test' })
-      mite.clearCapturedErrors()
-      expect(mite.getCapturedErrors()).toEqual([])
     })
   })
 

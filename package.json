@@ -1,12 +1,11 @@
 {
   "version": "0.0.1",
-  "description": "A template for Nitrogen Modules.",
+  "description": "Mite SDK",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
     "typescript": "bun --filter=\"**\" typescript",
-    "clean": "rm -rf package/tsconfig.tsbuildinfo package/node_modules package/lib",
-    "spec": "cd package && bun specs && cd .."
+    "clean": "rm -rf package/tsconfig.tsbuildinfo package/node_modules package/lib"
   },
   "workspaces": [
     "example",
@@ -17,7 +16,6 @@
   "license": "MIT",
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "nitrogen": "^0.32.0",
     "typescript": "~5.9.2"
   }
 }
