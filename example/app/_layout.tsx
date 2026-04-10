@@ -8,8 +8,6 @@ import 'react-native-reanimated'
 import { Mite, MiteProvider } from '@mite/mite-sdk'
 
 const mite = new Mite({
-  // publicKey: process.env.EXPO_PUBLIC_MITE_KEY!,
-  // appId: process.env.EXPO_PUBLIC_MITE_APP_ID!,
   apiKey: process.env.EXPO_PUBLIC_MITE_API_KEY,
 })
 
@@ -37,12 +35,6 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
-        <Stack.Screen
-          name="bug-report"
-          options={{
-            presentation: 'modal',
-          }}
-        />
       </Stack>
       <StatusBar style="auto" />
     </MiteProvider>

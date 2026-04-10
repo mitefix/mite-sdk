@@ -1,9 +1,7 @@
 import * as Device from 'expo-device'
 import { BugReporter } from './BugReporter'
-import { ErrorHandler } from './ErrorHandler'
 import { OfflineQueue } from './OfflineQueue'
 import type {
-  CapturedError,
   GetReleasesOptions,
   IdentifyUserPayload,
   IdentifyUserResponse,
@@ -52,9 +50,7 @@ export class Mite {
   private bugReporter: BugReporter
   private apiKey?: string
   private config: MiteConfig
-  private errorHandler: ErrorHandler | null = null
   private offlineQueue: OfflineQueue | null = null
-  private capturedErrors: CapturedError[] = []
   private initialized = false
 
   constructor(config: MiteConfig) {
@@ -74,7 +70,7 @@ export class Mite {
   }
 
   /**
-   * Initialize the SDK. Sets up JS error tracking and offline queue.
+   * Initialize the SDK. Sets up offline queue.
    * Call this once after creating the Mite instance.
    */
   init(): void {
@@ -83,16 +79,7 @@ export class Mite {
       return
     }
 
-    const enableErrorTracking = this.config.enableErrorTracking !== false
     const enableOfflineQueue = this.config.enableOfflineQueue !== false
-
-    if (enableErrorTracking) {
-      this.errorHandler = new ErrorHandler((error: Error, isFatal: boolean) => {
-        this.handleCapturedError(error, isFatal)
-      })
-      this.errorHandler.install()
-      console.log('[Mite] JS error tracking enabled')
-    }
 
     if (enableOfflineQueue) {
       this.offlineQueue = new OfflineQueue(this.apiClient)
@@ -104,20 +91,14 @@ export class Mite {
   }
 
   /**
-   * Tear down the SDK. Removes error handlers and clears queues.
+   * Tear down the SDK. Clears queues.
    */
   destroy(): void {
-    if (this.errorHandler) {
-      this.errorHandler.uninstall()
-      this.errorHandler = null
-    }
-
     if (this.offlineQueue) {
       this.offlineQueue.destroy()
       this.offlineQueue = null
     }
 
-    this.capturedErrors = []
     this.initialized = false
   }
 
@@ -196,20 +177,6 @@ export class Mite {
   }
 
   /**
-   * Get all JS errors captured since last retrieval.
-   */
-  getCapturedErrors(): CapturedError[] {
-    return [...this.capturedErrors]
-  }
-
-  /**
-   * Clear captured errors buffer.
-   */
-  clearCapturedErrors(): void {
-    this.capturedErrors = []
-  }
-
-  /**
    * Manually flush the offline queue.
    */
   async flushOfflineQueue(): Promise<void> {
@@ -223,31 +190,6 @@ export class Mite {
    */
   get pendingRequestCount(): number {
     return this.offlineQueue?.pendingCount ?? 0
-  }
-
-  private handleCapturedError(error: Error, isFatal: boolean): void {
-    const captured: CapturedError = {
-      message: error.message,
-      stack: error.stack,
-      isFatal,
-      timestamp: Date.now(),
-    }
-
-    this.capturedErrors.push(captured)
-
-    // Keep buffer bounded
-    if (this.capturedErrors.length > 50) {
-      this.capturedErrors = this.capturedErrors.slice(-50)
-    }
-
-    if (this.config.onError) {
-      this.config.onError(error, isFatal)
-    }
-
-    console.error(
-      `[Mite] Captured ${isFatal ? 'fatal' : 'non-fatal'} error:`,
-      error.message,
-    )
   }
 
   private isNetworkError(err: unknown): boolean {

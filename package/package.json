@@ -37,21 +37,21 @@
     "access": "public"
   },
   "peerDependencies": {
-    "expo-device": "*",
-    "react": "*",
-    "react-native": "*"
+    "expo-device": "^8.0.10",
+    "react": "^19.1.0",
+    "react-native": "^0.81.5"
   },
   "dependencies": {
-    "axios": "^1.13.2"
+    "axios": "^1.15.0"
   },
   "devDependencies": {
     "@release-it/bumper": "^7.0.5",
-    "@release-it/conventional-changelog": "^10.0.1",
+    "@release-it/conventional-changelog": "^10.0.6",
     "@types/jest": "^30.0.0",
-    "@types/react": "^19.1.0",
+    "@types/react": "^19.2.14",
     "jest": "^30.3.0",
-    "react-native-builder-bob": "^0.40.13",
-    "release-it": "^19.0.4",
+    "react-native-builder-bob": "^0.40.18",
+    "release-it": "^19.2.4",
     "ts-jest": "^29.4.9"
   },
   "release-it": {
