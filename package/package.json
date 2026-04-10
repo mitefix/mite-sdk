@@ -14,6 +14,7 @@
   ],
   "scripts": {
     "build": "rm -rf lib && bun typecheck && bob build",
+    "typescript": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "clean": "rm -rf lib",

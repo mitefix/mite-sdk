@@ -1,1 +1,1 @@
-module.exports = require('./plugin/withIosDeploymentTarget16');
+module.exports = require('./plugin/withIosDeploymentTarget16')
