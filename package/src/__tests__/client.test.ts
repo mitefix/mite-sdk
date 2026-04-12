@@ -51,8 +51,14 @@ describe('ApiClient', () => {
         baseURL: 'https://custom.api',
         timeout: 5000,
         headers: expect.objectContaining({
-          'X-Custom': 'value',
+          'Content-Type': 'application/json',
         }),
+      }),
+    )
+
+    expect(mockAxios.defaults.headers.common).toEqual(
+      expect.objectContaining({
+        'X-Custom': 'value',
       }),
     )
   })

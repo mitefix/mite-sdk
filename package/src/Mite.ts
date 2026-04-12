@@ -61,8 +61,14 @@ export class Mite {
       baseUrl: config.endpoint,
       timeout: config.timeout || 5000,
       maxRetries: config.retries,
-      headers: config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {},
     })
+
+    if (this.apiKey) {
+      this.apiClient.updateHeaders({
+        Authorization: `Bearer ${this.apiKey}`,
+      })
+    }
+
     this.bugReporter = new BugReporter({
       deviceInfo: this.deviceInfo,
       apiClient: this.apiClient,
@@ -109,6 +115,8 @@ export class Mite {
   async submitBug(
     payload: Omit<SubmitBugReportPayload, 'appId' | 'deviceInfo'>,
   ): Promise<SubmitBugReportResponse> {
+    this.requireApiKey('submit bug reports')
+
     try {
       return await this.bugReporter.sendBugReportToServer(payload)
     } catch (err) {
@@ -128,11 +136,7 @@ export class Mite {
    * At least one of user_identifier or anonymous_id is required.
    */
   async identify(payload: IdentifyUserPayload): Promise<IdentifyUserResponse> {
-    if (!this.apiKey) {
-      throw new Error(
-        '[Mite] API key is required to identify users. Please provide apiKey in MiteConfig.',
-      )
-    }
+    this.requireApiKey('identify users')
 
     if (!payload.user_identifier && !payload.anonymous_id) {
       throw new Error(
@@ -150,11 +154,7 @@ export class Mite {
    * Fetch published releases for the application
    */
   async getReleases(options: GetReleasesOptions = {}): Promise<Release[]> {
-    if (!this.apiKey) {
-      throw new Error(
-        '[Mite] API key is required to fetch releases. Please provide apiKey in MiteConfig.',
-      )
-    }
+    const apiKey = this.requireApiKey('fetch releases')
 
     const params = new URLSearchParams()
     if (options.platform) {
@@ -169,7 +169,7 @@ export class Mite {
 
     const response = await this.apiClient.get<ReleasesResponse>(url, {
       headers: {
-        Authorization: `Bearer ${this.apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
       },
     })
 
@@ -198,5 +198,17 @@ export class Mite {
       return code === 'ERR_NETWORK' || code === 'ECONNABORTED' || code === 'ETIMEDOUT'
     }
     return false
+  }
+
+  private requireApiKey(action: string): string {
+    const apiKey = this.apiKey
+
+    if (!apiKey) {
+      throw new Error(
+        `[Mite] API key is required to ${action}. Please provide apiKey in MiteConfig.`,
+      )
+    }
+
+    return apiKey
   }
 }

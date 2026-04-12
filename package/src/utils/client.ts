@@ -25,9 +25,12 @@ export class ApiClient {
       timeout: options.timeout ?? 10000,
       headers: {
         'Content-Type': 'application/json',
-        ...options.headers,
       },
     })
+
+    if (options.headers) {
+      this.updateHeaders(options.headers)
+    }
 
     // Set up retry BEFORE error logging so retried requests
     // don't produce spurious error logs
