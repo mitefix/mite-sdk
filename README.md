@@ -1,6 +1,6 @@
 # MiteSDK
 
-A React Native SDK for managing app releases and version tracking.
+A React Native SDK for managing releases, bug reports, and feature requests.
 
 ## Installation
 
@@ -122,6 +122,48 @@ const releases = await mite.getReleases({
   platform: 'android',
   limit: 5,
 })
+```
+
+### Feature Requests
+
+Fetch the feature request board for your app:
+
+```typescript
+const requests = await mite.getFeatureRequests()
+```
+
+Create a new feature request:
+
+```typescript
+await mite.createFeatureRequest({
+  title: 'Offline mode',
+  description: 'Let users browse cached content without a connection',
+  author_name: 'Taylor',
+  author_email: 'taylor@example.com',
+})
+```
+
+Toggle a vote and fetch a voter’s existing votes:
+
+```typescript
+await mite.voteFeatureRequest({
+  feature_request_id: 'fr_123',
+  voter_email: 'taylor@example.com',
+})
+
+const votedIds = await mite.getFeatureRequestVotes('taylor@example.com')
+```
+
+Or use the `useFeatureRequests` hook to fetch the board and vote state together:
+
+```typescript
+import { useFeatureRequests } from '@mite/mite-sdk'
+
+const { featureRequests, votedFeatureRequestIds, loading, refetch } =
+  useFeatureRequests({
+    enabled: true,
+    voterEmail: 'taylor@example.com',
+  })
 ```
 
 ### Release Object

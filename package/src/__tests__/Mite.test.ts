@@ -305,6 +305,92 @@ describe('Mite', () => {
     })
   })
 
+  describe('feature requests', () => {
+    it('fetches feature requests', async () => {
+      const requests = [
+        {
+          id: 'fr_1',
+          title: 'Offline mode',
+          description: 'Cache updates locally',
+          authorName: 'Test User',
+          voteCount: 3,
+          status: 'OPEN',
+          createdAt: 123,
+        },
+      ]
+      mockAxios.get.mockResolvedValueOnce({ data: { requests } })
+
+      const mite = new Mite({ apiKey: 'test' })
+      const result = await mite.getFeatureRequests()
+
+      expect(result).toEqual(requests)
+      expect(mockAxios.get).toHaveBeenCalledWith('/api/v1/feature-requests', undefined)
+    })
+
+    it('creates feature requests with normalized author email', async () => {
+      mockAxios.post.mockResolvedValueOnce({
+        data: { id: 'fr_1', status: 'OPEN' },
+      })
+
+      const mite = new Mite({ apiKey: 'test' })
+      const result = await mite.createFeatureRequest({
+        title: ' Offline mode ',
+        description: ' Cache updates locally ',
+        author_name: ' Test User ',
+        author_email: 'USER@EXAMPLE.COM ',
+      })
+
+      expect(result).toEqual({ id: 'fr_1', status: 'OPEN' })
+      expect(mockAxios.post).toHaveBeenCalledWith(
+        '/api/v1/feature-requests',
+        {
+          title: 'Offline mode',
+          description: 'Cache updates locally',
+          author_name: 'Test User',
+          author_email: 'user@example.com',
+        },
+        undefined,
+      )
+    })
+
+    it('votes on feature requests with normalized voter email', async () => {
+      mockAxios.post.mockResolvedValueOnce({
+        data: { voted: true, voteCount: 4 },
+      })
+
+      const mite = new Mite({ apiKey: 'test' })
+      const result = await mite.voteFeatureRequest({
+        feature_request_id: 'fr_1',
+        voter_email: 'USER@EXAMPLE.COM ',
+      })
+
+      expect(result).toEqual({ voted: true, voteCount: 4 })
+      expect(mockAxios.post).toHaveBeenCalledWith(
+        '/api/v1/feature-requests/vote',
+        {
+          feature_request_id: 'fr_1',
+          voter_email: 'user@example.com',
+        },
+        undefined,
+      )
+    })
+
+    it('fetches voted feature request ids for an email', async () => {
+      mockAxios.get.mockResolvedValueOnce({
+        data: { featureRequestIds: ['fr_1', 'fr_2'] },
+      })
+
+      const mite = new Mite({ apiKey: 'test' })
+      const result = await mite.getFeatureRequestVotes('USER@EXAMPLE.COM ')
+
+      expect(result).toEqual(['fr_1', 'fr_2'])
+      expect(mockAxios.get).toHaveBeenCalledWith(
+        '/api/v1/feature-requests/votes?voter_email=user%40example.com',
+        undefined,
+      )
+    })
+  })
+
   describe('pendingRequestCount', () => {
     it('returns 0 when offline queue is not enabled', async () => {
       mockAxios.post.mockResolvedValue({ data: { id: 'anon-user', created: true } })
