@@ -12,8 +12,12 @@ import type {
   SubmitBugReportResponse,
 } from './types'
 import { ApiClient } from './utils/client'
+import {
+  normalizeDeviceInfo,
+  type FlatStringRecord,
+} from './utils/deviceInfo'
 
-function getDeviceInfo(): Record<string, unknown> {
+function getDeviceInfo(): FlatStringRecord {
   const deviceTypeMap: Record<number, string> = {
     0: 'UNKNOWN',
     1: 'PHONE',
@@ -22,7 +26,7 @@ function getDeviceInfo(): Record<string, unknown> {
     4: 'TV',
   }
 
-  return {
+  return normalizeDeviceInfo({
     brand: Device.brand,
     designName: Device.designName,
     deviceName: Device.deviceName,
@@ -41,11 +45,11 @@ function getDeviceInfo(): Record<string, unknown> {
     productName: Device.productName,
     supportedCpuArchitectures: Device.supportedCpuArchitectures,
     totalMemory: Device.totalMemory,
-  }
+  })
 }
 
 export class Mite {
-  private deviceInfo: Record<string, unknown>
+  private deviceInfo: FlatStringRecord
   private apiClient: ApiClient
   private bugReporter: BugReporter
   private apiKey?: string
@@ -122,8 +126,8 @@ export class Mite {
     } catch (err) {
       if (this.offlineQueue && this.isNetworkError(err)) {
         this.offlineQueue.enqueue('post', '/api/v1/bug-reports', {
-          device_info: this.deviceInfo,
           ...payload,
+          device_info: normalizeDeviceInfo(payload.device_info ?? this.deviceInfo),
         })
         console.log('[Mite] Bug report queued for retry')
       }
@@ -146,7 +150,7 @@ export class Mite {
 
     return this.apiClient.post<IdentifyUserResponse>('/api/v1/identify', {
       ...payload,
-      device_info: payload.device_info ?? this.deviceInfo,
+      device_info: normalizeDeviceInfo(payload.device_info ?? this.deviceInfo),
     })
   }
 

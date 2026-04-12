@@ -1,14 +1,18 @@
 import type { SubmitBugReportPayload, SubmitBugReportResponse } from './types'
 import type { ApiClient } from './utils/client'
+import {
+  normalizeDeviceInfo,
+  type FlatStringRecord,
+} from './utils/deviceInfo'
 
 interface BugReporterConfig {
   apiClient: ApiClient
-  deviceInfo: Record<string, unknown>
+  deviceInfo: FlatStringRecord
 }
 
 export class BugReporter {
   private apiClient: ApiClient
-  private deviceInfo: Record<string, unknown>
+  private deviceInfo: FlatStringRecord
 
   constructor(config: BugReporterConfig) {
     const { apiClient, deviceInfo } = config
@@ -44,7 +48,11 @@ export class BugReporter {
   async sendBugReportToServer(
     payload: Omit<SubmitBugReportPayload, 'appId' | 'deviceInfo'>,
   ): Promise<SubmitBugReportResponse> {
-    const { attachments: localAttachments, ...rest } = payload
+    const {
+      attachments: localAttachments,
+      device_info,
+      ...rest
+    } = payload
 
     let attachments:
       | Array<{
@@ -72,8 +80,8 @@ export class BugReporter {
     }
 
     return this.apiClient.post<SubmitBugReportResponse>('/api/v1/bug-reports', {
-      device_info: this.deviceInfo,
       ...rest,
+      device_info: normalizeDeviceInfo(device_info ?? this.deviceInfo),
       attachments,
     })
   }

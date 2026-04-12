@@ -135,6 +135,31 @@ describe('Mite', () => {
 
       expect(result).toEqual({ id: '123', created: true })
     })
+
+    it('normalizes default device_info values to strings for identify', async () => {
+      mockAxios.post.mockResolvedValueOnce({
+        data: { id: '123', created: true },
+      })
+
+      const mite = new Mite({ apiKey: 'test' })
+      await mite.identify({ user_identifier: 'user1' })
+
+      expect(mockAxios.post).toHaveBeenCalledWith(
+        '/api/v1/identify',
+        expect.objectContaining({
+          user_identifier: 'user1',
+          device_info: expect.objectContaining({
+            brand: 'TestBrand',
+            deviceYearClass: '2024',
+            isDevice: 'true',
+            platformApiLevel: '34',
+            supportedCpuArchitectures: '["arm64"]',
+            totalMemory: '8000000000',
+          }),
+        }),
+        undefined,
+      )
+    })
   })
 
   describe('getReleases', () => {
@@ -191,6 +216,40 @@ describe('Mite', () => {
       })
 
       expect(result).toEqual({ id: 'bug-1', status: 'OPEN' })
+    })
+
+    it('normalizes custom device_info values to flat string values for bug reports', async () => {
+      mockAxios.post.mockResolvedValueOnce({
+        data: { id: 'bug-1', status: 'OPEN' },
+      })
+
+      const mite = new Mite({ apiKey: 'test' })
+      await mite.submitBug({
+        title: 'Test Bug',
+        description: 'A test bug report',
+        device_info: {
+          build: 42,
+          isTablet: false,
+          supported: ['arm64', 'x64'],
+          nested: { model: 'test' },
+          empty: undefined,
+        },
+      })
+
+      expect(mockAxios.post).toHaveBeenCalledWith(
+        '/api/v1/bug-reports',
+        expect.objectContaining({
+          title: 'Test Bug',
+          description: 'A test bug report',
+          device_info: {
+            build: '42',
+            isTablet: 'false',
+            supported: '["arm64","x64"]',
+            nested: '{"model":"test"}',
+          },
+        }),
+        undefined,
+      )
     })
   })
 })
