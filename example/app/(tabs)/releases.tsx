@@ -66,6 +66,8 @@ export default function ReleasesScreen() {
   const tintColor = useThemeColor({ light: '#0a7ea4', dark: '#4fc3f7' }, 'tint')
   const errorBg = useThemeColor({ light: '#FFEBEE', dark: '#3b1a1a' }, 'background')
 
+  console.log(releases)
+
   return (
     <ThemedView style={styles.container}>
       <ScrollView

@@ -10,6 +10,10 @@ interface BugReporterConfig {
   deviceInfo: FlatStringRecord
 }
 
+interface SendBugReportOptions {
+  includeDefaultDeviceInfo?: boolean
+}
+
 export class BugReporter {
   private apiClient: ApiClient
   private deviceInfo: FlatStringRecord
@@ -47,12 +51,14 @@ export class BugReporter {
 
   async sendBugReportToServer(
     payload: Omit<SubmitBugReportPayload, 'appId' | 'deviceInfo'>,
+    options: SendBugReportOptions = {},
   ): Promise<SubmitBugReportResponse> {
     const {
       attachments: localAttachments,
       device_info,
       ...rest
     } = payload
+    const { includeDefaultDeviceInfo = true } = options
 
     let attachments:
       | Array<{
@@ -79,10 +85,20 @@ export class BugReporter {
       }
     }
 
-    return this.apiClient.post<SubmitBugReportResponse>('/api/v1/bug-reports', {
+    const requestBody: Record<string, unknown> = {
       ...rest,
-      device_info: normalizeDeviceInfo(device_info ?? this.deviceInfo),
       attachments,
-    })
+    }
+
+    if (device_info) {
+      requestBody.device_info = normalizeDeviceInfo(device_info)
+    } else if (includeDefaultDeviceInfo) {
+      requestBody.device_info = normalizeDeviceInfo(this.deviceInfo)
+    }
+
+    return this.apiClient.post<SubmitBugReportResponse>(
+      '/api/v1/bug-reports',
+      requestBody,
+    )
   }
 }

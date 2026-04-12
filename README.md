@@ -19,10 +19,12 @@ bun add @mite/mite-sdk
 Create a Mite instance and initialize it in your app's entry point:
 
 ```typescript
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Mite, MiteProvider } from '@mite/mite-sdk'
 
 const mite = new Mite({
   apiKey: process.env.EXPO_PUBLIC_MITE_API_KEY,
+  identityStorage: AsyncStorage,
 })
 
 mite.init()
@@ -44,7 +46,31 @@ interface MiteConfig {
   endpoint?: string  // Custom backend endpoint (optional)
   timeout?: number   // Request timeout in ms (default: 5000)
   retries?: number   // Max retry attempts for failed requests
+  anonymousId?: string // Optional override for the generated anonymous user id
+  identityStorage?: MiteIdentityStorage // AsyncStorage-compatible adapter for persistence
+  identificationOptOut?: boolean // Start in anonymous-only mode
 }
+```
+
+When `mite.init()` runs, the SDK generates an anonymous user ID automatically and syncs it to the identify endpoint in the background. If you provide `identityStorage`, that anonymous ID survives app restarts so the same installed app instance keeps the same anonymous identity. Later, you can call `identify` with a real `user_identifier`, and the SDK will include the same anonymous ID so the backend can link the anonymous user to the known user.
+
+```typescript
+await mite.identify({
+  user_identifier: 'user_123',
+  email: 'user@example.com',
+})
+```
+
+When the user logs out, clear the identified user but keep the anonymous ID:
+
+```typescript
+await mite.logout()
+```
+
+If the user opts out of being identified, switch the SDK into anonymous-only mode. In this mode Mite still sends `anonymous_id`, but it stops sending `user_identifier`, email/name fields, metadata, and default `device_info`.
+
+```typescript
+await mite.setIdentificationOptOut(true)
 ```
 
 ## Usage

@@ -1,8 +1,28 @@
+export interface MiteIdentityStorage {
+  getItem(key: string): string | null | Promise<string | null>
+  setItem(key: string, value: string): void | Promise<void>
+  removeItem(key: string): void | Promise<void>
+}
+
 export interface MiteConfig {
   apiKey?: string
   endpoint?: string
   timeout?: number
   retries?: number
+  /**
+   * Override the automatically generated anonymous identifier.
+   */
+  anonymousId?: string
+  /**
+   * Persisted identity state storage. Provide an AsyncStorage-compatible adapter
+   * in React Native to keep the anonymous id across app restarts.
+   */
+  identityStorage?: MiteIdentityStorage
+  /**
+   * Start the SDK in anonymous-only mode. When enabled, Mite will not send
+   * user ids, contact fields, metadata, or device info.
+   */
+  identificationOptOut?: boolean
   /**
    * Enable offline request queuing for failed requests.
    * @default true

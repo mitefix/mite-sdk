@@ -6,6 +6,7 @@ import { useReleases } from './useReleases'
 export { Mite, MiteProvider, useMite, useBugReport, useReleases }
 export type {
   MiteConfig,
+  MiteIdentityStorage,
   Release,
   GetReleasesOptions,
   SubmitBugReportPayload,

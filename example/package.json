@@ -27,6 +27,7 @@
     "@expo/vector-icons": "^15.0.3",
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.9.3",
+    "@react-native-async-storage/async-storage": "^2.2.0",
     "@usemite/mite-sdk": "*",
     "expo": "~55.0.14",
     "expo-blur": "~55.0.14",
