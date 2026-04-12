@@ -86,6 +86,11 @@ export default function HomeScreen() {
             description="Browse your app's version history and release notes."
           />
           <FeatureCard
+            icon="lightbulb.fill"
+            title="Feature Requests"
+            description="Create requests, review the board, and toggle votes from the example app."
+          />
+          <FeatureCard
             icon="person.fill"
             title="User Identification"
             description="Identify users to associate bug reports with accounts."

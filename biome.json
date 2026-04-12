@@ -48,6 +48,7 @@
       "*.tsx",
       "example/**/*.ts",
       "example/**/*.tsx"
-    ]
+    ],
+    "ignore": ["example/.expo/**"]
   }
 }
