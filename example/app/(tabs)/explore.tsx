@@ -1,121 +1,272 @@
-import { Collapsible } from '@/components/Collapsible'
-import { ExternalLink } from '@/components/ExternalLink'
-import ParallaxScrollView from '@/components/ParallaxScrollView'
 import { ThemedText } from '@/components/ThemedText'
 import { ThemedView } from '@/components/ThemedView'
-import { IconSymbol } from '@/components/ui/IconSymbol'
-import { Image, Platform, StyleSheet } from 'react-native'
+import { InputWithLabel } from '@/components/ui/InputWithLabel'
+import { useThemeColor } from '@/hooks/useThemeColor'
+import { useBugReport } from '@mite/mite-sdk'
+import { useState } from 'react'
+import {
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-export default function TabTwoScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }
-    >
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText> sets up
-          the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version,
-          press <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running
-          this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the{' '}
-          <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files
-          for different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ alignSelf: 'center' }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how
-          to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
+const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as const
+
+export default function ReportScreen() {
+  const insets = useSafeAreaInsets()
+  const { submitBug, submitting, lastResponse, reset } = useBugReport()
+  const tintColor = useThemeColor({ light: '#0a7ea4', dark: '#4fc3f7' }, 'tint')
+  const cardBg = useThemeColor({ light: '#f5f5f5', dark: '#1e1e1e' }, 'background')
+  const chipBg = useThemeColor({ light: '#e8e8e8', dark: '#2a2a2a' }, 'background')
+
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [priority, setPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'>(
+    'MEDIUM',
+  )
+  const [stepsToReproduce, setStepsToReproduce] = useState('')
+
+  const handleSubmit = async () => {
+    if (!title.trim() || !description.trim()) {
+      Alert.alert('Missing fields', 'Title and description are required.')
+      return
+    }
+
+    try {
+      await submitBug({
+        title: title.trim(),
+        description: description.trim(),
+        priority,
+        steps_to_reproduce: stepsToReproduce.trim() || undefined,
+      })
+      Alert.alert('Bug reported!', 'Your report has been submitted.', [
+        {
+          text: 'OK',
+          onPress: () => {
+            setTitle('')
+            setDescription('')
+            setPriority('MEDIUM')
+            setStepsToReproduce('')
+            reset()
+          },
+        },
+      ])
+    } catch {
+      Alert.alert('Error', 'Failed to submit. Please try again.')
+    }
+  }
+
+  if (lastResponse) {
+    return (
+      <ThemedView style={styles.container}>
+        <View style={[styles.successContainer, { paddingTop: insets.top + 20 }]}>
+          <View style={[styles.successBadge, { backgroundColor: '#34c75920' }]}>
+            <ThemedText style={styles.successIcon}>✓</ThemedText>
+          </View>
+          <ThemedText type="title">Submitted</ThemedText>
+          <ThemedText lightColor="#666" darkColor="#999">
+            Bug ID: {lastResponse.id}
           </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you
-          inspect what the user's current color scheme is, and so you can adjust UI colors
-          accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText>{' '}
-          component uses the powerful{' '}
-          <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText> library
-          to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The{' '}
-              <ThemedText type="defaultSemiBold">
-                components/ParallaxScrollView.tsx
-              </ThemedText>{' '}
-              component provides a parallax effect for the header image.
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: tintColor }]}
+            onPress={() => {
+              setTitle('')
+              setDescription('')
+              setPriority('MEDIUM')
+              setStepsToReproduce('')
+              reset()
+            }}
+          >
+            <ThemedText style={styles.buttonText} lightColor="#fff" darkColor="#fff">
+              Report Another
             </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+          </TouchableOpacity>
+        </View>
+      </ThemedView>
+    )
+  }
+
+  return (
+    <ThemedView style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.container}
+      >
+        <ScrollView
+          contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 20 }]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <ThemedText type="title" style={styles.pageTitle}>
+            Report a Bug
+          </ThemedText>
+          <ThemedText style={styles.pageSubtitle} lightColor="#666" darkColor="#999">
+            Help us improve by reporting issues
+          </ThemedText>
+
+          <View style={styles.form}>
+            <InputWithLabel
+              label="Title"
+              required
+              placeholder="Brief summary of the issue"
+              value={title}
+              onChangeText={setTitle}
+            />
+
+            <InputWithLabel
+              label="Description"
+              required
+              placeholder="What happened?"
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={4}
+              style={styles.textArea}
+            />
+
+            <View style={styles.fieldContainer}>
+              <ThemedText style={styles.label}>Priority</ThemedText>
+              <View style={styles.chipRow}>
+                {PRIORITIES.map(p => {
+                  const isSelected = priority === p
+                  return (
+                    <TouchableOpacity
+                      key={p}
+                      onPress={() => setPriority(p)}
+                      style={[
+                        styles.chip,
+                        {
+                          backgroundColor: isSelected ? tintColor : chipBg,
+                        },
+                      ]}
+                    >
+                      <ThemedText
+                        style={styles.chipText}
+                        lightColor={isSelected ? '#fff' : '#666'}
+                        darkColor={isSelected ? '#fff' : '#999'}
+                      >
+                        {p}
+                      </ThemedText>
+                    </TouchableOpacity>
+                  )
+                })}
+              </View>
+            </View>
+
+            <InputWithLabel
+              label="Steps to Reproduce"
+              placeholder="1. Go to...&#10;2. Tap on...&#10;3. See error"
+              value={stepsToReproduce}
+              onChangeText={setStepsToReproduce}
+              multiline
+              numberOfLines={3}
+              style={styles.textArea}
+            />
+
+            <TouchableOpacity
+              style={[
+                styles.button,
+                { backgroundColor: tintColor },
+                submitting && styles.buttonDisabled,
+              ]}
+              onPress={handleSubmit}
+              disabled={submitting}
+            >
+              {submitting ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <ThemedText style={styles.buttonText} lightColor="#fff" darkColor="#fff">
+                  Submit Report
+                </ThemedText>
+              )}
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </ThemedView>
   )
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: {
+    flex: 1,
   },
-  titleContainer: {
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 100,
+  },
+  pageTitle: {
+    marginBottom: 4,
+  },
+  pageSubtitle: {
+    fontSize: 16,
+    marginBottom: 24,
+  },
+  form: {
+    gap: 4,
+  },
+  fieldContainer: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  textArea: {
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  chipRow: {
     flexDirection: 'row',
     gap: 8,
+  },
+  chip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  chipText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  button: {
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  successContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: 20,
+  },
+  successBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  successIcon: {
+    fontSize: 28,
+    color: '#34c759',
+    fontWeight: 'bold',
   },
 })

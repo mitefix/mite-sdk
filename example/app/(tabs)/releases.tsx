@@ -1,125 +1,137 @@
-import ParallaxScrollView from '@/components/ParallaxScrollView'
+import { ThemedText } from '@/components/ThemedText'
+import { ThemedView } from '@/components/ThemedView'
+import { useThemeColor } from '@/hooks/useThemeColor'
 import { type Release, useReleases } from '@mite/mite-sdk'
 import {
   ActivityIndicator,
-  Image,
+  ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-export default function ReleasesScreen() {
-  const { releases, loading, error, refetch } = useReleases({ limit: 10 })
+const PLATFORM_COLORS: Record<string, string> = {
+  ios: '#007AFF',
+  android: '#34c759',
+  all: '#8E44AD',
+}
 
-  const formatDate = (timestamp?: number) => {
-    if (!timestamp) return 'Not released'
-    return new Date(timestamp).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    })
-  }
+const PLATFORM_LABELS: Record<string, string> = {
+  ios: 'iOS',
+  android: 'Android',
+  all: 'All Platforms',
+}
 
-  const getPlatformLabel = (platform: string) => {
-    switch (platform) {
-      case 'ios':
-        return 'iOS'
-      case 'android':
-        return 'Android'
-      case 'all':
-        return 'All Platforms'
-      default:
-        return platform
-    }
-  }
+function formatDate(timestamp?: number) {
+  if (!timestamp) return 'Draft'
+  return new Date(timestamp).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
 
-  const getPlatformColor = (platform: string) => {
-    switch (platform) {
-      case 'ios':
-        return '#007AFF'
-      case 'android':
-        return '#3DDC84'
-      case 'all':
-        return '#8E44AD'
-      default:
-        return '#666'
-    }
-  }
-
-  const renderRelease = (release: Release) => (
-    <View key={release.id} style={styles.releaseCard}>
-      <View style={styles.releaseHeader}>
-        <Text style={styles.version}>v{release.version}</Text>
-        <View
-          style={[
-            styles.platformBadge,
-            { backgroundColor: getPlatformColor(release.platform) },
-          ]}
-        >
-          <Text style={styles.platformText}>{getPlatformLabel(release.platform)}</Text>
-        </View>
-      </View>
-      {release.notes && <Text style={styles.notes}>{release.notes}</Text>}
-      <Text style={styles.date}>
-        {release.releasedAt ? `Released: ${formatDate(release.releasedAt)}` : 'Draft'}
-      </Text>
-    </View>
-  )
+function ReleaseCard({ release }: { release: Release }) {
+  const cardBg = useThemeColor({ light: '#f5f5f5', dark: '#1e1e1e' }, 'background')
+  const platformColor = PLATFORM_COLORS[release.platform] ?? '#666'
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#E8F5E9', dark: '#1B5E20' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.headerImage}
-        />
-      }
-    >
-      <View style={styles.container}>
+    <View style={[styles.card, { backgroundColor: cardBg }]}>
+      <View style={styles.cardHeader}>
+        <ThemedText type="defaultSemiBold" style={styles.version}>
+          v{release.version}
+        </ThemedText>
+        <View style={[styles.badge, { backgroundColor: platformColor }]}>
+          <ThemedText style={styles.badgeText} lightColor="#fff" darkColor="#fff">
+            {PLATFORM_LABELS[release.platform] ?? release.platform}
+          </ThemedText>
+        </View>
+      </View>
+      {release.notes && (
+        <ThemedText style={styles.notes} lightColor="#444" darkColor="#bbb">
+          {release.notes}
+        </ThemedText>
+      )}
+      <ThemedText style={styles.date} lightColor="#999" darkColor="#666">
+        {formatDate(release.releasedAt)}
+      </ThemedText>
+    </View>
+  )
+}
+
+export default function ReleasesScreen() {
+  const insets = useSafeAreaInsets()
+  const { releases, loading, error, refetch } = useReleases({ limit: 10 })
+  const tintColor = useThemeColor({ light: '#0a7ea4', dark: '#4fc3f7' }, 'tint')
+  const errorBg = useThemeColor({ light: '#FFEBEE', dark: '#3b1a1a' }, 'background')
+
+  return (
+    <ThemedView style={styles.container}>
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 20 }]}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.header}>
           <View>
-            <Text style={styles.title}>Releases</Text>
-            <Text style={styles.subtitle}>App version history</Text>
+            <ThemedText type="title">Releases</ThemedText>
+            <ThemedText style={styles.subtitle} lightColor="#666" darkColor="#999">
+              App version history
+            </ThemedText>
           </View>
           <TouchableOpacity
-            style={styles.refreshButton}
+            style={[styles.refreshButton, { backgroundColor: tintColor }]}
             onPress={refetch}
             disabled={loading}
           >
-            <Text style={styles.refreshButtonText}>Refresh</Text>
+            <ThemedText style={styles.refreshText} lightColor="#fff" darkColor="#fff">
+              Refresh
+            </ThemedText>
           </TouchableOpacity>
         </View>
 
         {loading && (
           <View style={styles.centered}>
-            <ActivityIndicator size="large" color="#007AFF" />
-            <Text style={styles.loadingText}>Loading releases...</Text>
+            <ActivityIndicator size="large" color={tintColor} />
+            <ThemedText style={styles.loadingText} lightColor="#666" darkColor="#999">
+              Loading releases...
+            </ThemedText>
           </View>
         )}
 
         {error && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error.message}</Text>
+          <View style={[styles.errorContainer, { backgroundColor: errorBg }]}>
+            <ThemedText style={styles.errorText} lightColor="#C62828" darkColor="#ef5350">
+              {error.message}
+            </ThemedText>
             <TouchableOpacity style={styles.retryButton} onPress={refetch}>
-              <Text style={styles.retryText}>Retry</Text>
+              <ThemedText style={styles.retryText} lightColor="#fff" darkColor="#fff">
+                Retry
+              </ThemedText>
             </TouchableOpacity>
           </View>
         )}
 
         {!loading && !error && releases.length === 0 && (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No releases found</Text>
-            <Text style={styles.emptySubtext}>
+          <View style={styles.centered}>
+            <ThemedText type="defaultSemiBold" lightColor="#666" darkColor="#999">
+              No releases found
+            </ThemedText>
+            <ThemedText style={styles.emptySubtext} lightColor="#999" darkColor="#666">
               Check that your API key is configured correctly
-            </Text>
+            </ThemedText>
           </View>
         )}
 
-        {!loading && releases.map(renderRelease)}
-      </View>
-    </ParallaxScrollView>
+        {!loading && (
+          <View style={styles.list}>
+            {releases.map(release => (
+              <ReleaseCard key={release.id} release={release} />
+            ))}
+          </View>
+        )}
+      </ScrollView>
+    </ThemedView>
   )
 }
 
@@ -127,60 +139,46 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 100,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: 24,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    marginTop: 4,
   },
   refreshButton: {
-    backgroundColor: '#007AFF',
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingVertical: 10,
+    borderRadius: 10,
   },
-  refreshButtonText: {
-    color: 'white',
+  refreshText: {
     fontSize: 14,
     fontWeight: '600',
-  },
-  headerImage: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-    opacity: 0.3,
   },
   centered: {
     alignItems: 'center',
     paddingVertical: 40,
+    gap: 8,
   },
   loadingText: {
-    marginTop: 12,
     fontSize: 16,
-    color: '#666',
   },
   errorContainer: {
-    backgroundColor: '#FFEBEE',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
+    gap: 12,
   },
   errorText: {
-    color: '#C62828',
     fontSize: 14,
     textAlign: 'center',
-    marginBottom: 12,
   },
   retryButton: {
     backgroundColor: '#C62828',
@@ -189,58 +187,43 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   retryText: {
-    color: 'white',
     fontWeight: '600',
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#666',
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#999',
-    marginTop: 8,
     textAlign: 'center',
   },
-  releaseCard: {
-    backgroundColor: '#F5F5F5',
+  list: {
+    gap: 12,
+  },
+  card: {
     padding: 16,
     borderRadius: 12,
-    marginBottom: 12,
   },
-  releaseHeader: {
+  cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
   },
   version: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
   },
-  platformBadge: {
+  badge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 8,
   },
-  platformText: {
-    color: 'white',
+  badgeText: {
     fontSize: 12,
     fontWeight: '600',
   },
   notes: {
     fontSize: 14,
-    color: '#333',
-    marginBottom: 8,
     lineHeight: 20,
+    marginBottom: 8,
   },
   date: {
     fontSize: 12,
-    color: '#666',
   },
 })

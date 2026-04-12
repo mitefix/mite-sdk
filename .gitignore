@@ -81,3 +81,5 @@ example/android
 
 .claude
 tsconfig.tsbuildinfo
+.env.*
+.env

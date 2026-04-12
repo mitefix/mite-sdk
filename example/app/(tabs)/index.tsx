@@ -1,45 +1,172 @@
-import ParallaxScrollView from '@/components/ParallaxScrollView'
+import { ThemedText } from '@/components/ThemedText'
+import { ThemedView } from '@/components/ThemedView'
+import { IconSymbol } from '@/components/ui/IconSymbol'
+import type { IconSymbolName } from '@/components/ui/IconSymbol'
+import { useThemeColor } from '@/hooks/useThemeColor'
 import { useMite } from '@mite/mite-sdk'
-import { Image, StyleSheet, Text, View } from 'react-native'
+import { ScrollView, StyleSheet, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+
+function FeatureCard({
+  icon,
+  title,
+  description,
+}: {
+  icon: IconSymbolName
+  title: string
+  description: string
+}) {
+  const cardBg = useThemeColor({ light: '#f5f5f5', dark: '#1e1e1e' }, 'background')
+  const iconColor = useThemeColor({ light: '#0a7ea4', dark: '#4fc3f7' }, 'tint')
+
+  return (
+    <View style={[styles.card, { backgroundColor: cardBg }]}>
+      <IconSymbol name={icon} size={28} color={iconColor} style={styles.cardIcon} />
+      <View style={styles.cardContent}>
+        <ThemedText type="defaultSemiBold">{title}</ThemedText>
+        <ThemedText style={styles.cardDescription} lightColor="#666" darkColor="#999">
+          {description}
+        </ThemedText>
+      </View>
+    </View>
+  )
+}
 
 export default function HomeScreen() {
   const mite = useMite()
+  const insets = useSafeAreaInsets()
+  const tintColor = useThemeColor({ light: '#0a7ea4', dark: '#4fc3f7' }, 'tint')
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }
-    >
-      <View style={styles.container}>
-        <Text style={styles.title}>Mite SDK Example</Text>
-      </View>
-    </ParallaxScrollView>
+    <ThemedView style={styles.container}>
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 20 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
+          <View style={[styles.logoBadge, { backgroundColor: `${tintColor}15` }]}>
+            <IconSymbol name="ladybug.fill" size={32} color={tintColor} />
+          </View>
+          <ThemedText type="title" style={styles.title}>
+            Mite SDK
+          </ThemedText>
+          <ThemedText style={styles.subtitle} lightColor="#666" darkColor="#999">
+            Bug reporting & release management
+          </ThemedText>
+        </View>
+
+        <View style={styles.statusRow}>
+          <View style={styles.statusDot} />
+          <ThemedText style={styles.statusText} lightColor="#666" darkColor="#999">
+            SDK initialized
+          </ThemedText>
+          <ThemedText style={styles.statusText} lightColor="#999" darkColor="#666">
+            {' · '}
+            {mite.pendingRequestCount} pending
+          </ThemedText>
+        </View>
+
+        <View style={styles.section}>
+          <ThemedText
+            type="defaultSemiBold"
+            style={styles.sectionTitle}
+            lightColor="#999"
+            darkColor="#666"
+          >
+            FEATURES
+          </ThemedText>
+          <FeatureCard
+            icon="ant.fill"
+            title="Bug Reports"
+            description="Submit bug reports with attachments and device info. Try it in the Report tab."
+          />
+          <FeatureCard
+            icon="shippingbox.fill"
+            title="Releases"
+            description="Browse your app's version history and release notes."
+          />
+          <FeatureCard
+            icon="person.fill"
+            title="User Identification"
+            description="Identify users to associate bug reports with accounts."
+          />
+          <FeatureCard
+            icon="wifi.slash"
+            title="Offline Queue"
+            description="Requests are queued when offline and sent when connectivity returns."
+          />
+        </View>
+      </ScrollView>
+    </ThemedView>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 100,
+  },
+  header: {
     alignItems: 'center',
-    padding: 20,
-    gap: 10,
+    marginBottom: 24,
+  },
+  logoBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 4,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  subtitle: {
+    fontSize: 16,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 32,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#34c759',
+    marginRight: 8,
+  },
+  statusText: {
+    fontSize: 14,
+  },
+  section: {
+    gap: 12,
+  },
+  sectionTitle: {
+    fontSize: 13,
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  card: {
+    flexDirection: 'row',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'flex-start',
+  },
+  cardIcon: {
+    marginRight: 14,
+    marginTop: 2,
+  },
+  cardContent: {
+    flex: 1,
+    gap: 2,
+  },
+  cardDescription: {
+    fontSize: 14,
+    lineHeight: 20,
   },
 })
