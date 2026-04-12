@@ -13,11 +13,15 @@ function createMockApiClient(postFn?: jest.Mock, putFn?: jest.Mock): ApiClient {
 }
 
 describe('OfflineQueue', () => {
+  let consoleErrorSpy: jest.SpyInstance
+
   beforeEach(() => {
     jest.useFakeTimers()
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
   })
 
   afterEach(() => {
+    consoleErrorSpy.mockRestore()
     jest.useRealTimers()
   })
 
@@ -62,6 +66,9 @@ describe('OfflineQueue', () => {
 
     await queue.flush()
     expect(queue.pendingCount).toBe(0) // Dropped after 3 retries
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      '[Mite] Dropping queued request to /api/v1/test after 3 retries',
+    )
 
     queue.destroy()
   })

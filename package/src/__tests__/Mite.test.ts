@@ -56,6 +56,16 @@ describe('Mite', () => {
       })
       expect(mite).toBeInstanceOf(Mite)
     })
+
+    it('stores authorization header in axios defaults when apiKey is provided', () => {
+      new Mite({ apiKey: 'test-key' })
+
+      expect(mockAxios.defaults.headers.common).toEqual(
+        expect.objectContaining({
+          Authorization: 'Bearer test-key',
+        }),
+      )
+    })
   })
 
   describe('init', () => {
@@ -158,6 +168,17 @@ describe('Mite', () => {
   })
 
   describe('submitBug', () => {
+    it('throws without apiKey', async () => {
+      const mite = new Mite({})
+
+      await expect(
+        mite.submitBug({
+          title: 'Test Bug',
+          description: 'A test bug report',
+        }),
+      ).rejects.toThrow('[Mite] API key is required')
+    })
+
     it('submits a bug report', async () => {
       mockAxios.post.mockResolvedValueOnce({
         data: { id: 'bug-1', status: 'OPEN' },
