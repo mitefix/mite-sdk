@@ -1,15 +1,15 @@
+import { useThemeColor } from '@/hooks/useThemeColor'
 import React from 'react'
 import {
-  View,
-  TextInput,
-  StyleSheet,
-  type TextInputProps,
   type StyleProp,
-  type ViewStyle,
+  StyleSheet,
+  TextInput,
+  type TextInputProps,
   type TextStyle,
+  View,
+  type ViewStyle,
 } from 'react-native'
 import { ThemedText } from '../ThemedText'
-import { useThemeColor } from '@/hooks/useThemeColor'
 
 export type InputWithLabelProps = TextInputProps & {
   label: string

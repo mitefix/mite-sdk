@@ -31,11 +31,7 @@ export interface MiteConfig {
 }
 
 export type ReleasePlatform = 'ios' | 'android' | 'all'
-export type FeatureRequestStatus =
-  | 'OPEN'
-  | 'IN_PROGRESS'
-  | 'COMPLETED'
-  | 'CLOSED'
+export type FeatureRequestStatus = 'OPEN' | 'IN_PROGRESS' | 'COMPLETED' | 'CLOSED'
 
 export interface Release {
   id: string

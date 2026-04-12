@@ -19,10 +19,7 @@ import type {
   VoteFeatureRequestResponse,
 } from './types'
 import { ApiClient } from './utils/client'
-import {
-  normalizeDeviceInfo,
-  type FlatStringRecord,
-} from './utils/deviceInfo'
+import { type FlatStringRecord, normalizeDeviceInfo } from './utils/deviceInfo'
 import { generateAnonymousId } from './utils/identity'
 import { resolveIdentityStorage } from './utils/storage'
 
@@ -385,8 +382,10 @@ export class Mite {
           this.currentAnonymousId = parsed.anonymousId
         }
 
-        if (typeof parsed.identificationOptOut === 'boolean'
-          && this.config.identificationOptOut === undefined) {
+        if (
+          typeof parsed.identificationOptOut === 'boolean' &&
+          this.config.identificationOptOut === undefined
+        ) {
           this.identificationOptOut = parsed.identificationOptOut
         }
 

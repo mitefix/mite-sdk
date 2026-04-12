@@ -31,10 +31,10 @@ function hasLocalStorage(): boolean {
     const localStorage = (globalThis as GlobalWithLocalStorage).localStorage
 
     return Boolean(
-      localStorage
-      && typeof localStorage.getItem === 'function'
-      && typeof localStorage.setItem === 'function'
-      && typeof localStorage.removeItem === 'function',
+      localStorage &&
+        typeof localStorage.getItem === 'function' &&
+        typeof localStorage.setItem === 'function' &&
+        typeof localStorage.removeItem === 'function',
     )
   } catch {
     return false
@@ -57,9 +57,10 @@ function createLocalStorageAdapter(): MiteIdentityStorage {
   }
 }
 
-export function resolveIdentityStorage(
-  storage?: MiteIdentityStorage,
-): { storage: MiteIdentityStorage; isPersistent: boolean } {
+export function resolveIdentityStorage(storage?: MiteIdentityStorage): {
+  storage: MiteIdentityStorage
+  isPersistent: boolean
+} {
   if (storage) {
     return {
       storage,
