@@ -2,6 +2,10 @@ import * as Device from 'expo-device'
 import { BugReporter } from './BugReporter'
 import { OfflineQueue } from './OfflineQueue'
 import type {
+  CreateFeatureRequestPayload,
+  CreateFeatureRequestResponse,
+  FeatureRequest,
+  FeatureRequestVotesResponse,
   GetReleasesOptions,
   IdentifyUserPayload,
   IdentifyUserResponse,
@@ -11,12 +15,11 @@ import type {
   ReleasesResponse,
   SubmitBugReportPayload,
   SubmitBugReportResponse,
+  VoteFeatureRequestPayload,
+  VoteFeatureRequestResponse,
 } from './types'
 import { ApiClient } from './utils/client'
-import {
-  normalizeDeviceInfo,
-  type FlatStringRecord,
-} from './utils/deviceInfo'
+import { type FlatStringRecord, normalizeDeviceInfo } from './utils/deviceInfo'
 import { generateAnonymousId } from './utils/identity'
 import { resolveIdentityStorage } from './utils/storage'
 
@@ -260,6 +263,72 @@ export class Mite {
   }
 
   /**
+   * Fetch feature requests for the current application.
+   */
+  async getFeatureRequests(): Promise<FeatureRequest[]> {
+    this.requireApiKey('fetch feature requests')
+
+    const response = await this.apiClient.get<{
+      requests: FeatureRequest[]
+    }>('/api/v1/feature-requests')
+
+    return response.requests
+  }
+
+  /**
+   * Create a feature request for the current application.
+   */
+  async createFeatureRequest(
+    payload: CreateFeatureRequestPayload,
+  ): Promise<CreateFeatureRequestResponse> {
+    this.requireApiKey('create feature requests')
+
+    return await this.apiClient.post<CreateFeatureRequestResponse>(
+      '/api/v1/feature-requests',
+      {
+        title: payload.title.trim(),
+        description: payload.description?.trim() ?? '',
+        author_name: payload.author_name.trim(),
+        author_email: payload.author_email.trim().toLowerCase(),
+      },
+    )
+  }
+
+  /**
+   * Toggle a vote on a feature request for the current application.
+   */
+  async voteFeatureRequest(
+    payload: VoteFeatureRequestPayload,
+  ): Promise<VoteFeatureRequestResponse> {
+    this.requireApiKey('vote on feature requests')
+
+    return await this.apiClient.post<VoteFeatureRequestResponse>(
+      '/api/v1/feature-requests/vote',
+      {
+        feature_request_id: payload.feature_request_id,
+        voter_email: payload.voter_email.trim().toLowerCase(),
+      },
+    )
+  }
+
+  /**
+   * Fetch the feature requests already voted on by an email address.
+   */
+  async getFeatureRequestVotes(voterEmail: string): Promise<string[]> {
+    this.requireApiKey('fetch feature request votes')
+
+    const params = new URLSearchParams({
+      voter_email: voterEmail.trim().toLowerCase(),
+    })
+
+    const response = await this.apiClient.get<FeatureRequestVotesResponse>(
+      `/api/v1/feature-requests/votes?${params.toString()}`,
+    )
+
+    return response.featureRequestIds
+  }
+
+  /**
    * Manually flush the offline queue.
    */
   async flushOfflineQueue(): Promise<void> {
@@ -313,8 +382,10 @@ export class Mite {
           this.currentAnonymousId = parsed.anonymousId
         }
 
-        if (typeof parsed.identificationOptOut === 'boolean'
-          && this.config.identificationOptOut === undefined) {
+        if (
+          typeof parsed.identificationOptOut === 'boolean' &&
+          this.config.identificationOptOut === undefined
+        ) {
           this.identificationOptOut = parsed.identificationOptOut
         }
 

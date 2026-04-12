@@ -1,6 +1,6 @@
+import { useColorScheme } from '@/hooks/useColorScheme'
 import type { PropsWithChildren, ReactElement } from 'react'
 import { StyleSheet } from 'react-native'
-import { useColorScheme } from '@/hooks/useColorScheme'
 import Animated, {
   interpolate,
   useAnimatedRef,

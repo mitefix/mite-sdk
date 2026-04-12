@@ -53,6 +53,15 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="feature-requests"
+        options={{
+          title: 'Requests',
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="lightbulb.fill" color={color} />
+          ),
+        }}
+      />
     </Tabs>
   )
 }

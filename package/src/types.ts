@@ -31,6 +31,7 @@ export interface MiteConfig {
 }
 
 export type ReleasePlatform = 'ios' | 'android' | 'all'
+export type FeatureRequestStatus = 'OPEN' | 'IN_PROGRESS' | 'COMPLETED' | 'CLOSED'
 
 export interface Release {
   id: string
@@ -49,6 +50,46 @@ export interface ReleasesResponse {
 export interface GetReleasesOptions {
   platform?: ReleasePlatform
   limit?: number
+}
+
+export interface FeatureRequest {
+  id: string
+  title: string
+  description: string
+  authorName: string
+  voteCount: number
+  status: FeatureRequestStatus
+  createdAt: number
+}
+
+export interface FeatureRequestsResponse {
+  requests: FeatureRequest[]
+}
+
+export interface CreateFeatureRequestPayload {
+  title: string
+  description?: string
+  author_name: string
+  author_email: string
+}
+
+export interface CreateFeatureRequestResponse {
+  id: string
+  status: FeatureRequestStatus
+}
+
+export interface VoteFeatureRequestPayload {
+  feature_request_id: string
+  voter_email: string
+}
+
+export interface VoteFeatureRequestResponse {
+  voted: boolean
+  voteCount: number
+}
+
+export interface FeatureRequestVotesResponse {
+  featureRequestIds: string[]
 }
 
 export interface SubmitBugReportPayload {
