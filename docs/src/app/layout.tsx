@@ -1,4 +1,7 @@
+import { baseOptions } from '@/lib/layout.shared'
+import { source } from '@/lib/source'
 import { Analytics } from '@vercel/analytics/next'
+import { DocsLayout } from 'fumadocs-ui/layouts/docs'
 import { RootProvider } from 'fumadocs-ui/provider/next'
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
@@ -17,7 +20,11 @@ export default function Layout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="flex min-h-screen flex-col font-sans">
-        <RootProvider>{children}</RootProvider>
+        <RootProvider>
+          <DocsLayout tree={source.getPageTree()} {...baseOptions()}>
+            {children}
+          </DocsLayout>
+        </RootProvider>
         <Analytics />
       </body>
     </html>
