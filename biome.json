@@ -49,6 +49,11 @@
       "example/**/*.ts",
       "example/**/*.tsx"
     ],
-    "ignore": ["example/.expo/**"]
+    "ignore": [
+      "example/.expo/**",
+      "docs/next-env.d.ts",
+      "docs/.next/**",
+      "docs/.source/**"
+    ]
   }
 }
