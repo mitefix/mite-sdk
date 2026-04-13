@@ -9,8 +9,7 @@ export default function HomePage() {
           Mite SDK
         </h1>
         <p className="text-lg text-fd-muted-foreground">
-          Bug reporting, release management, and feature requests for React
-          Native apps.
+          Bug reporting, release management, and feature requests for React Native apps.
         </p>
         <div className="flex items-center justify-center gap-3">
           <Link

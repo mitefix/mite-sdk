@@ -1,18 +1,22 @@
-import { source } from '@/lib/source'
-import type { InferPageType } from 'fumadocs-core/source'
-import {
-  DocsBody,
-  DocsDescription,
-  DocsPage,
-  DocsTitle,
-} from 'fumadocs-ui/page'
-import { notFound } from 'next/navigation'
 import { getMDXComponents } from '@/components/mdx'
+import { source } from '@/lib/source'
+import type { TableOfContents } from 'fumadocs-core/toc'
 import { createRelativeLink } from 'fumadocs-ui/mdx'
+import { DocsBody, DocsDescription, DocsPage, DocsTitle } from 'fumadocs-ui/page'
+import type { MDXComponents } from 'mdx/types'
 import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 
 interface PageProps {
   params: Promise<{ slug?: string[] }>
+}
+
+interface MDXPageData {
+  title: string
+  description?: string
+  body: (props: { components?: MDXComponents }) => React.ReactElement
+  toc: TableOfContents
+  full?: boolean
 }
 
 export default async function Page(props: PageProps) {
@@ -20,12 +24,13 @@ export default async function Page(props: PageProps) {
   const page = source.getPage(params.slug)
   if (!page) notFound()
 
-  const MDX = page.data.body
+  const data = page.data as unknown as MDXPageData
+  const MDX = data.body
 
   return (
-    <DocsPage toc={page.data.toc} full={page.data.full}>
-      <DocsTitle>{page.data.title}</DocsTitle>
-      <DocsDescription>{page.data.description}</DocsDescription>
+    <DocsPage toc={data.toc} full={data.full}>
+      <DocsTitle>{data.title}</DocsTitle>
+      <DocsDescription>{data.description}</DocsDescription>
       <DocsBody>
         <MDX
           components={getMDXComponents({
