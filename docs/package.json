@@ -11,6 +11,7 @@
   "dependencies": {
     "@fontsource-variable/geist": "^5.1.1",
     "@fontsource-variable/geist-mono": "^5.1.1",
+    "@vercel/analytics": "^2.0.1",
     "fumadocs-core": "^16.0.0",
     "fumadocs-mdx": "^14.0.0",
     "fumadocs-ui": "^16.0.0",
