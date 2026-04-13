@@ -1,0 +1,86 @@
+---
+title: Hooks Reference
+description: Complete reference for all React hooks provided by the Mite SDK.
+---
+
+## useMite
+
+Access the Mite instance from any component within `MiteProvider`:
+
+```ts
+import { useMite } from '@usemite/mite-sdk'
+
+const mite = useMite()
+```
+
+## useReleases
+
+Fetch app releases with loading state management.
+
+```ts
+import { useReleases } from '@usemite/mite-sdk'
+
+const { releases, loading, error, refetch } = useReleases(options?)
+```
+
+### Options
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `platform` | `'ios' \| 'android' \| 'all'` | `'all'` | Filter by platform |
+| `limit` | `number` | — | Max number of releases |
+| `enabled` | `boolean` | `true` | Enable/disable fetching |
+
+### Return Value
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `releases` | `Release[]` | Array of releases |
+| `loading` | `boolean` | Whether data is being fetched |
+| `error` | `Error \| null` | Error if fetch failed |
+| `refetch` | `() => void` | Manually trigger a refetch |
+
+## useFeatureRequests
+
+Fetch the feature request board with vote state.
+
+```ts
+import { useFeatureRequests } from '@usemite/mite-sdk'
+
+const { featureRequests, votedFeatureRequestIds, loading, refetch } =
+  useFeatureRequests(options?)
+```
+
+### Options
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `enabled` | `boolean` | `true` | Enable/disable fetching |
+| `voterEmail` | `string` | — | Email to check votes for |
+
+### Return Value
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `featureRequests` | `FeatureRequest[]` | Array of feature requests |
+| `votedFeatureRequestIds` | `string[]` | IDs the voter has voted for |
+| `loading` | `boolean` | Whether data is being fetched |
+| `refetch` | `() => void` | Manually trigger a refetch |
+
+## useBugReport
+
+Submit bug reports.
+
+```ts
+import { useBugReport } from '@usemite/mite-sdk'
+
+const { submitBugReport, loading, error } = useBugReport()
+```
+
+### Return Value
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `submitBugReport` | `(payload: BugReportPayload) => Promise<void>` | Submit a bug report |
+| `loading` | `boolean` | Whether submission is in progress |
+| `error` | `Error \| null` | Error if submission failed |

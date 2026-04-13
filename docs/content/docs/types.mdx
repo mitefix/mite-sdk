@@ -1,0 +1,108 @@
+---
+title: Types Reference
+description: All TypeScript types exported by the Mite SDK.
+---
+
+## MiteConfig
+
+Configuration for the Mite instance.
+
+```ts
+interface MiteConfig {
+  apiKey?: string
+  endpoint?: string
+  timeout?: number
+  retries?: number
+  anonymousId?: string
+  identityStorage?: MiteIdentityStorage
+  identificationOptOut?: boolean
+}
+```
+
+## MiteIdentityStorage
+
+Storage adapter interface (compatible with `AsyncStorage`):
+
+```ts
+interface MiteIdentityStorage {
+  getItem(key: string): Promise<string | null>
+  setItem(key: string, value: string): Promise<void>
+  removeItem(key: string): Promise<void>
+}
+```
+
+## Release
+
+```ts
+interface Release {
+  id: string
+  version: string
+  versionCode: number
+  platform: 'ios' | 'android' | 'all'
+  notes?: string
+  releasedAt?: number
+  createdAt: number
+}
+```
+
+## FeatureRequest
+
+```ts
+interface FeatureRequest {
+  id: string
+  title: string
+  description?: string
+  status: FeatureRequestStatus
+  author_name?: string
+  author_email?: string
+  vote_count: number
+  createdAt: number
+}
+
+type FeatureRequestStatus = 'OPEN' | 'IN_PROGRESS' | 'COMPLETED' | 'CLOSED'
+```
+
+## SubmitBugReportPayload
+
+```ts
+interface SubmitBugReportPayload {
+  title: string
+  description?: string
+  steps_to_reproduce?: string
+  expected_behavior?: string
+  actual_behavior?: string
+  priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+  attachments?: File[]
+}
+```
+
+## IdentifyUserPayload
+
+```ts
+interface IdentifyUserPayload {
+  user_identifier: string
+  email?: string
+  name?: string
+  metadata?: Record<string, string>
+}
+```
+
+## CreateFeatureRequestPayload
+
+```ts
+interface CreateFeatureRequestPayload {
+  title: string
+  description?: string
+  author_name?: string
+  author_email?: string
+}
+```
+
+## VoteFeatureRequestPayload
+
+```ts
+interface VoteFeatureRequestPayload {
+  feature_request_id: string
+  voter_email: string
+}
+```

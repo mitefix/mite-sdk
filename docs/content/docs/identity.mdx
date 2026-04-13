@@ -1,0 +1,43 @@
+---
+title: Identity Management
+description: How user identification and anonymous tracking work in the Mite SDK.
+---
+
+When `mite.init()` runs, the SDK generates an anonymous user ID automatically and syncs it to the identify endpoint in the background.
+
+If you provide `identityStorage`, that anonymous ID survives app restarts so the same installed app instance keeps the same anonymous identity.
+
+## Identifying Users
+
+Link a real user to their anonymous session:
+
+```ts
+await mite.identify({
+  user_identifier: 'user_123',
+  email: 'user@example.com',
+})
+```
+
+The SDK includes the `anonymous_id` so the backend can link the anonymous user to the known user.
+
+## Logging Out
+
+Clear the identified user but keep the anonymous ID:
+
+```ts
+await mite.logout()
+```
+
+## Privacy Opt-Out
+
+Switch the SDK into anonymous-only mode. In this mode Mite still sends `anonymous_id`, but stops sending `user_identifier`, email/name fields, metadata, and default `device_info`.
+
+```ts
+await mite.setIdentificationOptOut(true)
+```
+
+To re-enable identification:
+
+```ts
+await mite.setIdentificationOptOut(false)
+```
