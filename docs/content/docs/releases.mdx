@@ -1,0 +1,67 @@
+---
+title: Releases
+description: Fetch and display app releases with the Mite SDK.
+---
+
+## Using the Hook
+
+The `useReleases` hook fetches app releases with automatic loading state:
+
+```tsx
+import { useReleases } from '@usemite/mite-sdk'
+
+export default function ReleasesScreen() {
+  const { releases, loading, error, refetch } = useReleases({
+    platform: 'ios', // 'ios' | 'android' | 'all'
+    limit: 10,
+    enabled: true,
+  })
+
+  if (loading) return <Text>Loading...</Text>
+  if (error) return <Text>Error: {error.message}</Text>
+
+  return (
+    <FlatList
+      data={releases}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => (
+        <View>
+          <Text>{item.version} (Build {item.versionCode})</Text>
+          <Text>{item.notes}</Text>
+        </View>
+      )}
+      onRefresh={refetch}
+      refreshing={loading}
+    />
+  )
+}
+```
+
+## Direct API Access
+
+Fetch releases directly using the Mite instance:
+
+```ts
+import { useMite } from '@usemite/mite-sdk'
+
+const mite = useMite()
+
+const releases = await mite.getReleases({
+  platform: 'android',
+  limit: 5,
+})
+```
+
+## Release Object
+
+```ts
+interface Release {
+  id: string
+  version: string
+  versionCode: number
+  platform: 'ios' | 'android' | 'all'
+  notes?: string
+  releasedAt?: number
+  createdAt: number
+}
+```

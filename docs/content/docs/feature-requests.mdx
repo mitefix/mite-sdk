@@ -1,0 +1,63 @@
+---
+title: Feature Requests
+description: Manage your feature request board with voting and creation.
+---
+
+## Using the Hook
+
+The `useFeatureRequests` hook fetches the board and vote state together:
+
+```tsx
+import { useFeatureRequests } from '@usemite/mite-sdk'
+
+const { featureRequests, votedFeatureRequestIds, loading, refetch } =
+  useFeatureRequests({
+    enabled: true,
+    voterEmail: 'taylor@example.com',
+  })
+```
+
+## Fetching Feature Requests
+
+Fetch the feature request board directly:
+
+```ts
+const requests = await mite.getFeatureRequests()
+```
+
+## Creating Feature Requests
+
+```ts
+await mite.createFeatureRequest({
+  title: 'Offline mode',
+  description: 'Let users browse cached content without a connection',
+  author_name: 'Taylor',
+  author_email: 'taylor@example.com',
+})
+```
+
+## Voting
+
+Toggle a vote on a feature request:
+
+```ts
+await mite.voteFeatureRequest({
+  feature_request_id: 'fr_123',
+  voter_email: 'taylor@example.com',
+})
+```
+
+Fetch a user's existing votes:
+
+```ts
+const votedIds = await mite.getFeatureRequestVotes('taylor@example.com')
+```
+
+## Feature Request Status
+
+| Status | Description |
+| --- | --- |
+| `OPEN` | Accepting votes and feedback |
+| `IN_PROGRESS` | Currently being worked on |
+| `COMPLETED` | Feature has been shipped |
+| `CLOSED` | No longer planned |

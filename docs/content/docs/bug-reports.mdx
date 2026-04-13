@@ -1,0 +1,59 @@
+---
+title: Bug Reports
+description: Submit bug reports with file attachments using the Mite SDK.
+---
+
+## Using the Hook
+
+The `useBugReport` hook provides a simple way to submit bug reports:
+
+```tsx
+import { useBugReport } from '@usemite/mite-sdk'
+
+export default function BugReportScreen() {
+  const { submitBugReport, loading, error } = useBugReport()
+
+  const handleSubmit = async () => {
+    await submitBugReport({
+      title: 'App crashes on launch',
+      description: 'Steps to reproduce...',
+      expected_behavior: 'App should open normally',
+      actual_behavior: 'App crashes with white screen',
+      priority: 'HIGH',
+    })
+  }
+
+  return (
+    <Button onPress={handleSubmit} disabled={loading}>
+      Submit Bug Report
+    </Button>
+  )
+}
+```
+
+## Direct API Access
+
+You can also submit bug reports using the Mite instance directly:
+
+```ts
+import { useMite } from '@usemite/mite-sdk'
+
+const mite = useMite()
+
+await mite.submitBug({
+  title: 'Navigation broken',
+  description: 'Back button does not work on settings screen',
+  priority: 'MEDIUM',
+})
+```
+
+## Priority Levels
+
+Bug reports support four priority levels:
+
+| Priority | Use Case |
+| --- | --- |
+| `CRITICAL` | App is completely unusable |
+| `HIGH` | Major feature is broken |
+| `MEDIUM` | Feature works but with issues |
+| `LOW` | Minor cosmetic issue |

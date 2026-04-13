@@ -83,3 +83,6 @@ example/android
 tsconfig.tsbuildinfo
 .env.*
 .env
+
+.next
+.source

@@ -1,0 +1,67 @@
+---
+title: Getting Started
+description: Get up and running with the Mite SDK for React Native.
+---
+
+## Installation
+
+Install the SDK using your preferred package manager:
+
+```bash tab="npm"
+npm install @usemite/mite-sdk
+```
+
+```bash tab="yarn"
+yarn add @usemite/mite-sdk
+```
+
+```bash tab="bun"
+bun add @usemite/mite-sdk
+```
+
+## Setup
+
+### 1. Initialize Mite
+
+Create a Mite instance and initialize it in your app's entry point:
+
+```tsx
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { Mite, MiteProvider } from '@usemite/mite-sdk'
+
+const mite = new Mite({
+  apiKey: process.env.EXPO_PUBLIC_MITE_API_KEY,
+  identityStorage: AsyncStorage,
+})
+
+mite.init()
+
+export default function RootLayout() {
+  return (
+    <MiteProvider miteInstance={mite}>
+      {/* Your app */}
+    </MiteProvider>
+  )
+}
+```
+
+### 2. Configuration Options
+
+```ts
+interface MiteConfig {
+  apiKey?: string // Your API key
+  endpoint?: string // Custom backend endpoint (optional)
+  timeout?: number // Request timeout in ms (default: 5000)
+  retries?: number // Max retry attempts for failed requests
+  anonymousId?: string // Optional override for the generated anonymous user id
+  identityStorage?: MiteIdentityStorage // AsyncStorage-compatible adapter
+  identificationOptOut?: boolean // Start in anonymous-only mode
+}
+```
+
+## What's Next?
+
+- [Identity Management](/docs/identity) — Learn how user identification works
+- [Bug Reports](/docs/bug-reports) — Submit bug reports with attachments
+- [Releases](/docs/releases) — Fetch app releases
+- [Feature Requests](/docs/feature-requests) — Manage your feature request board
