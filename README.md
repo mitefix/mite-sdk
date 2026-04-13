@@ -20,11 +20,12 @@ Create a Mite instance and initialize it in your app's entry point:
 
 ```typescript
 import AsyncStorage from '@react-native-async-storage/async-storage'
+// or: import { MMKV } from 'react-native-mmkv'
 import { Mite, MiteProvider } from '@mite/mite-sdk'
 
 const mite = new Mite({
   apiKey: process.env.EXPO_PUBLIC_MITE_API_KEY,
-  identityStorage: AsyncStorage,
+  identityStorage: AsyncStorage, // or: new MMKV()
 })
 
 mite.init()
@@ -47,7 +48,7 @@ interface MiteConfig {
   timeout?: number   // Request timeout in ms (default: 5000)
   retries?: number   // Max retry attempts for failed requests
   anonymousId?: string // Optional override for the generated anonymous user id
-  identityStorage?: MiteIdentityStorage // AsyncStorage-compatible adapter for persistence
+  identityStorage?: MiteIdentityStorage | MiteMMKVLikeStorage // AsyncStorage or MMKV instance
   identificationOptOut?: boolean // Start in anonymous-only mode
 }
 ```

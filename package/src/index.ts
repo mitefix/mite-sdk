@@ -14,6 +14,7 @@ export type {
   FeatureRequestVotesResponse,
   MiteConfig,
   MiteIdentityStorage,
+  MiteMMKVLikeStorage,
   Release,
   GetReleasesOptions,
   SubmitBugReportPayload,

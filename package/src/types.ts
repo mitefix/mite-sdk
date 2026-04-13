@@ -4,6 +4,13 @@ export interface MiteIdentityStorage {
   removeItem(key: string): void | Promise<void>
 }
 
+/** MMKV-compatible storage interface (react-native-mmkv) */
+export interface MiteMMKVLikeStorage {
+  getString(key: string): string | undefined
+  set(key: string, value: string): void
+  delete(key: string): void
+}
+
 export interface MiteConfig {
   apiKey?: string
   endpoint?: string
@@ -14,10 +21,10 @@ export interface MiteConfig {
    */
   anonymousId?: string
   /**
-   * Persisted identity state storage. Provide an AsyncStorage-compatible adapter
-   * in React Native to keep the anonymous id across app restarts.
+   * Persisted identity state storage. Accepts an AsyncStorage-compatible adapter
+   * or an MMKV instance directly. Used to keep the anonymous id across app restarts.
    */
-  identityStorage?: MiteIdentityStorage
+  identityStorage?: MiteIdentityStorage | MiteMMKVLikeStorage
   /**
    * Start the SDK in anonymous-only mode. When enabled, Mite will not send
    * user ids, contact fields, metadata, or device info.

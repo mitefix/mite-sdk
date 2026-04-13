@@ -14,7 +14,7 @@ interface MiteConfig {
   timeout?: number
   retries?: number
   anonymousId?: string
-  identityStorage?: MiteIdentityStorage
+  identityStorage?: MiteIdentityStorage | MiteMMKVLikeStorage
   identificationOptOut?: boolean
 }
 ```
@@ -25,9 +25,21 @@ Storage adapter interface (compatible with `AsyncStorage`):
 
 ```ts
 interface MiteIdentityStorage {
-  getItem(key: string): Promise<string | null>
-  setItem(key: string, value: string): Promise<void>
-  removeItem(key: string): Promise<void>
+  getItem(key: string): string | null | Promise<string | null>
+  setItem(key: string, value: string): void | Promise<void>
+  removeItem(key: string): void | Promise<void>
+}
+```
+
+## MiteMMKVLikeStorage
+
+Storage interface for `react-native-mmkv`. You can pass an MMKV instance directly — the SDK wraps it automatically.
+
+```ts
+interface MiteMMKVLikeStorage {
+  getString(key: string): string | undefined
+  set(key: string, value: string): void
+  delete(key: string): void
 }
 ```
 
