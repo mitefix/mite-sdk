@@ -53,7 +53,8 @@
       "example/.expo/**",
       "docs/next-env.d.ts",
       "docs/.next/**",
-      "docs/.source/**"
+      "docs/.source/**",
+      "package/lib/**"
     ]
   }
 }

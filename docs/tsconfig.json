@@ -22,13 +22,9 @@
         "name": "next"
       }
     ],
-    "baseUrl": ".",
     "paths": {
       "@/*": [
         "./src/*"
-      ],
-      "collections/*": [
-        "./.source/*"
       ]
     }
   },
