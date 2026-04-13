@@ -12,6 +12,8 @@
     "lib": ["esnext"],
     "module": "esnext",
     "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
+    "types": ["jest", "node"],
     "noEmit": false,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,

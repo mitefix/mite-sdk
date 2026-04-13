@@ -22,7 +22,6 @@ export default function ReportScreen() {
   const insets = useSafeAreaInsets()
   const { submitBug, submitting, lastResponse, reset } = useBugReport()
   const tintColor = useThemeColor({ light: '#0a7ea4', dark: '#4fc3f7' }, 'tint')
-  const cardBg = useThemeColor({ light: '#f5f5f5', dark: '#1e1e1e' }, 'background')
   const chipBg = useThemeColor({ light: '#e8e8e8', dark: '#2a2a2a' }, 'background')
 
   const [title, setTitle] = useState('')
