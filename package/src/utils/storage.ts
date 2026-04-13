@@ -1,5 +1,12 @@
 import type { MiteIdentityStorage } from '../types'
 
+/** MMKV-compatible interface (react-native-mmkv) */
+interface MMKVLike {
+  getString(key: string): string | undefined
+  set(key: string, value: string): void
+  delete(key: string): void
+}
+
 interface LocalStorageLike {
   getItem(key: string): string | null
   setItem(key: string, value: string): void
@@ -57,13 +64,37 @@ function createLocalStorageAdapter(): MiteIdentityStorage {
   }
 }
 
-export function resolveIdentityStorage(storage?: MiteIdentityStorage): {
+function isMMKV(storage: unknown): storage is MMKVLike {
+  return (
+    typeof storage === 'object' &&
+    storage !== null &&
+    typeof (storage as MMKVLike).getString === 'function' &&
+    typeof (storage as MMKVLike).set === 'function' &&
+    typeof (storage as MMKVLike).delete === 'function'
+  )
+}
+
+function createMMKVAdapter(mmkv: MMKVLike): MiteIdentityStorage {
+  return {
+    getItem(key) {
+      return mmkv.getString(key) ?? null
+    },
+    setItem(key, value) {
+      mmkv.set(key, value)
+    },
+    removeItem(key) {
+      mmkv.delete(key)
+    },
+  }
+}
+
+export function resolveIdentityStorage(storage?: MiteIdentityStorage | MMKVLike): {
   storage: MiteIdentityStorage
   isPersistent: boolean
 } {
   if (storage) {
     return {
-      storage,
+      storage: isMMKV(storage) ? createMMKVAdapter(storage) : storage,
       isPersistent: true,
     }
   }
