@@ -16,19 +16,13 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as const
-
 export default function ReportScreen() {
   const insets = useSafeAreaInsets()
   const { submitBug, submitting, lastResponse, reset } = useBugReport()
   const tintColor = useThemeColor({ light: '#0a7ea4', dark: '#4fc3f7' }, 'tint')
-  const chipBg = useThemeColor({ light: '#e8e8e8', dark: '#2a2a2a' }, 'background')
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [priority, setPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'>(
-    'MEDIUM',
-  )
   const [stepsToReproduce, setStepsToReproduce] = useState('')
 
   const handleSubmit = async () => {
@@ -41,7 +35,6 @@ export default function ReportScreen() {
       await submitBug({
         title: title.trim(),
         description: description.trim(),
-        priority,
         steps_to_reproduce: stepsToReproduce.trim() || undefined,
       })
       Alert.alert('Bug reported!', 'Your report has been submitted.', [
@@ -50,7 +43,6 @@ export default function ReportScreen() {
           onPress: () => {
             setTitle('')
             setDescription('')
-            setPriority('MEDIUM')
             setStepsToReproduce('')
             reset()
           },
@@ -77,7 +69,6 @@ export default function ReportScreen() {
             onPress={() => {
               setTitle('')
               setDescription('')
-              setPriority('MEDIUM')
               setStepsToReproduce('')
               reset()
             }}
@@ -128,35 +119,6 @@ export default function ReportScreen() {
               numberOfLines={4}
               style={styles.textArea}
             />
-
-            <View style={styles.fieldContainer}>
-              <ThemedText style={styles.label}>Priority</ThemedText>
-              <View style={styles.chipRow}>
-                {PRIORITIES.map(p => {
-                  const isSelected = priority === p
-                  return (
-                    <TouchableOpacity
-                      key={p}
-                      onPress={() => setPriority(p)}
-                      style={[
-                        styles.chip,
-                        {
-                          backgroundColor: isSelected ? tintColor : chipBg,
-                        },
-                      ]}
-                    >
-                      <ThemedText
-                        style={styles.chipText}
-                        lightColor={isSelected ? '#fff' : '#666'}
-                        darkColor={isSelected ? '#fff' : '#999'}
-                      >
-                        {p}
-                      </ThemedText>
-                    </TouchableOpacity>
-                  )
-                })}
-              </View>
-            </View>
 
             <InputWithLabel
               label="Steps to Reproduce"
@@ -210,30 +172,9 @@ const styles = StyleSheet.create({
   form: {
     gap: 4,
   },
-  fieldContainer: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 8,
-  },
   textArea: {
     minHeight: 100,
     textAlignVertical: 'top',
-  },
-  chipRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  chipText: {
-    fontSize: 13,
-    fontWeight: '600',
   },
   button: {
     paddingVertical: 16,
