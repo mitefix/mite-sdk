@@ -1,6 +1,6 @@
 # Mite SDK
 
-React Native SDK for [Mite](https://github.com/mitefix/mite-sdk) — in-app bug reporting, user feedback, feature requests, and release notes.
+React Native SDK for [Mite](https://github.com/usemite/mite-sdk) — in-app bug reporting, user feedback, feature requests, and release notes.
 
 ## Installation
 
