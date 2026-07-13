@@ -1,6 +1,8 @@
 {
-  "include": ["src", "global.d.ts", "src/types.ts"],
+  "include": ["src", "global.d.ts"],
+  "exclude": ["src/__tests__"],
   "compilerOptions": {
+    "types": ["react"],
     "composite": true,
     "outDir": "lib",
     "rootDir": "src",

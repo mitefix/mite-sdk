@@ -5,15 +5,15 @@ const MiteContext = createContext<Mite | null>(null)
 
 export function MiteProvider({
   children,
-  miteInstance,
-}: { children: React.ReactNode; miteInstance: Mite }) {
-  return <MiteContext.Provider value={miteInstance}>{children}</MiteContext.Provider>
+  instance,
+}: { children: React.ReactNode; instance: Mite }) {
+  return <MiteContext.Provider value={instance}>{children}</MiteContext.Provider>
 }
 
-export function useMite() {
+export function useMite(): Mite {
   const mite = useContext(MiteContext)
   if (!mite) {
-    throw new Error('useMite must be used within a MiteProvider')
+    throw new Error('[Mite] useMite must be used within a MiteProvider')
   }
   return mite
 }

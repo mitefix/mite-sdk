@@ -1,66 +1,34 @@
 import ParallaxScrollView from '@/components/ParallaxScrollView'
-import { BugReport, useMite } from '@mite/mite-sdk'
+import { useMite } from '@usemite/mite-sdk'
 import { useRouter } from 'expo-router'
-import { Image, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { useState } from 'react'
+import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native'
 
 export default function HomeScreen() {
   const mite = useMite()
   const router = useRouter()
-  const triggerTypeError = () => {
-    // Trying to call a method on undefined
-    const user = undefined
-    // @ts-expect-error
-    user.getName()
-  }
+  const [identifying, setIdentifying] = useState(false)
 
-  const triggerReferenceError = () => {
-    // Trying to call an undefined function
-    // @ts-expect-error
-    nonExistentFunction()
-  }
-
-  const triggerPromiseError = async () => {
-    // Throwing an error in a promise
-    new Promise((resolve, reject) => {
-      reject(new Error('Async operation failed'))
-    })
-  }
-
-  const triggerCustomError = () => {
-    // Throwing a custom error
-    throw new Error('This is a custom error message')
-  }
-
-  const triggerRangeError = () => {
-    // Creating an array with invalid length
-    new Array(-1)
-  }
-
-  // This will trigger a native crash that will be caught by our native crash handlers
-  const triggerNativeCrash = () => {
-    // This creates a segmentation fault in native code
-    // WARNING: This will actually crash the app!
-    // Access memory address 0, which will cause a segmentation fault
-    // const array = new Int32Array(1)
-    // @ts-ignore - Intentionally causing a crash
-    // array[0xffffffff] = 0
-    console.log('called')
-
-    // @ts-expect-error
-    test.should?.crash()
-  }
-
-  const reportBug = async () => {
-    // Capture a bug and send it to the server
-    router.navigate('/bug-report')
-
-    // await mite.submitBug({
-    //   title: 'Bug Title',
-    //   description: 'Bug Description',
-    //   steps_to_reproduce: 'Steps to reproduce',
-    //   expected_behavior: 'Expected behavior',
-    //   actual_behavior: 'Actual behavior',
-    // })
+  const identifyUser = async () => {
+    setIdentifying(true)
+    try {
+      const result = await mite.identify({
+        userIdentifier: 'example-user-1',
+        email: 'user@example.com',
+        name: 'Example User',
+      })
+      Alert.alert(
+        'Identified',
+        result.created ? 'New profile created' : 'Existing profile updated',
+      )
+    } catch (error) {
+      Alert.alert(
+        'Identify failed',
+        error instanceof Error ? error.message : 'Unknown error',
+      )
+    } finally {
+      setIdentifying(false)
+    }
   }
 
   return (
@@ -74,38 +42,16 @@ export default function HomeScreen() {
       }
     >
       <View style={styles.container}>
-        <Text style={styles.title}>Error Testing App</Text>
+        <Text style={styles.title}>Mite SDK Demo</Text>
 
-        <TouchableOpacity style={styles.button} onPress={triggerTypeError}>
-          <Text style={styles.buttonText}>Trigger TypeError</Text>
-        </TouchableOpacity>
+        <Pressable style={styles.button} onPress={() => router.navigate('/bug-report')}>
+          <Text style={styles.buttonText}>Report a Bug</Text>
+        </Pressable>
 
-        <TouchableOpacity style={styles.button} onPress={triggerReferenceError}>
-          <Text style={styles.buttonText}>Trigger ReferenceError</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.button} onPress={triggerPromiseError}>
-          <Text style={styles.buttonText}>Trigger Promise Rejection</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.button} onPress={triggerCustomError}>
-          <Text style={styles.buttonText}>Trigger Custom Error</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.button} onPress={triggerRangeError}>
-          <Text style={styles.buttonText}>Trigger RangeError</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: '#FF3B30' }]}
-          onPress={triggerNativeCrash}
-        >
-          <Text style={styles.buttonText}>Trigger Native Crash</Text>
-        </TouchableOpacity>
-
-        <Pressable onPress={reportBug}>
-          <View style={styles.button}>
-            <Text style={styles.buttonText}>Report Bug</Text>
-          </View>
+        <Pressable style={styles.button} onPress={identifyUser} disabled={identifying}>
+          <Text style={styles.buttonText}>
+            {identifying ? 'Identifying…' : 'Identify User'}
+          </Text>
         </Pressable>
       </View>
     </ParallaxScrollView>

@@ -3,6 +3,7 @@ import { useMite } from './MiteProvider'
 import type { GetReleasesOptions, Release } from './types'
 
 export interface UseReleasesOptions extends GetReleasesOptions {
+  /** Set to false to defer fetching until refetch() is called. Defaults to true. */
   enabled?: boolean
 }
 
@@ -14,9 +15,10 @@ export interface UseReleasesResult {
 }
 
 export function useReleases(options: UseReleasesOptions = {}): UseReleasesResult {
+  const { enabled = true, platform, limit } = options
   const mite = useMite()
   const [releases, setReleases] = useState<Release[]>([])
-  const [loading, setLoading] = useState(options.enabled ?? false)
+  const [loading, setLoading] = useState(enabled)
   const [error, setError] = useState<Error | null>(null)
 
   const fetchReleases = useCallback(async () => {
@@ -24,22 +26,20 @@ export function useReleases(options: UseReleasesOptions = {}): UseReleasesResult
     setError(null)
 
     try {
-      const data = await mite.getReleases(options)
+      const data = await mite.getReleases({ platform, limit })
       setReleases(data)
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('Failed to fetch releases')
-      setError(error)
-      console.error('[Mite] useReleases error:', error)
+      setError(err instanceof Error ? err : new Error('Failed to fetch releases'))
     } finally {
       setLoading(false)
     }
-  }, [mite, options])
+  }, [mite, platform, limit])
 
   useEffect(() => {
-    if (options.enabled) {
+    if (enabled) {
       fetchReleases()
     }
-  }, [options.enabled, fetchReleases])
+  }, [enabled, fetchReleases])
 
   return {
     releases,

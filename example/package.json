@@ -1,5 +1,5 @@
 {
-  "name": "@mite/mite-sdk-example",
+  "name": "mite-sdk-example",
   "license": "0BSD",
   "main": "expo-router/entry",
   "version": "1.0.0",
@@ -24,9 +24,10 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
-    "@mite/mite-sdk": "*",
     "@react-navigation/bottom-tabs": "^7.9.0",
     "@react-navigation/elements": "^2.9.3",
+    "@react-navigation/native": "^7.3.8",
+    "@usemite/mite-sdk": "*",
     "expo": "~54.0.30",
     "expo-blur": "~15.0.8",
     "expo-build-properties": "~1.0.10",

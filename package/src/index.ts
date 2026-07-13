@@ -1,8 +1,23 @@
-import { Mite } from './Mite'
-import { MiteProvider, useMite } from './MiteProvider'
-import { useReleases } from './useReleases'
-import { ApiClient } from './utils/client'
-
-export { Mite, ApiClient, MiteProvider, useMite, useReleases }
-export type { MiteConfig, Release, GetReleasesOptions } from './types'
+export { Mite } from './Mite'
+export { MiteError } from './errors'
+export { MiteProvider, useMite } from './MiteProvider'
+export { useReleases } from './useReleases'
+export type {
+  BugReportAttachment,
+  BugReportPayload,
+  BugReportPriority,
+  BugReportResult,
+  CreateFeatureRequestPayload,
+  CreateFeatureRequestResult,
+  FeatureRequest,
+  FeatureRequestStatus,
+  GetReleasesOptions,
+  IdentifyPayload,
+  IdentifyResult,
+  MiteConfig,
+  Release,
+  ReleasePlatform,
+  VoteFeatureRequestPayload,
+  VoteResult,
+} from './types'
 export type { UseReleasesOptions, UseReleasesResult } from './useReleases'

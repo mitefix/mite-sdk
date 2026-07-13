@@ -2,7 +2,7 @@ import { ThemedText } from '@/components/ThemedText'
 import { ThemedView } from '@/components/ThemedView'
 import { InputWithLabel } from '@/components/ui/InputWithLabel'
 import { useThemeColor } from '@/hooks/useThemeColor'
-import { useMite } from '@mite/mite-sdk'
+import { MiteError, useMite } from '@usemite/mite-sdk'
 import * as ImagePicker from 'expo-image-picker'
 import { router } from 'expo-router'
 import { useState } from 'react'
@@ -81,12 +81,17 @@ export default function BugReportScreen() {
       await mite.submitBug({
         title: formData.title,
         description: formData.description,
-        reporter_name: formData.reporterName || undefined,
-        reporter_email: formData.reporterEmail || undefined,
-        steps_to_reproduce: formData.stepsToReproduce || undefined,
-        expected_behavior: formData.expectedBehavior || undefined,
-        actual_behavior: formData.actualBehavior || undefined,
+        reporterName: formData.reporterName || undefined,
+        reporterEmail: formData.reporterEmail || undefined,
+        stepsToReproduce: formData.stepsToReproduce || undefined,
+        expectedBehavior: formData.expectedBehavior || undefined,
+        actualBehavior: formData.actualBehavior || undefined,
         priority: formData.priority,
+        attachments: images?.map(image => ({
+          uri: image.uri,
+          fileName: image.fileName ?? undefined,
+          mimeType: image.mimeType,
+        })),
       })
       Alert.alert(
         'Bug Report Submitted',
@@ -99,12 +104,11 @@ export default function BugReportScreen() {
         ],
       )
     } catch (error) {
-      console.error('[Mite] Failed to submit bug report:', error)
-      Alert.alert(
-        'Submission Failed',
-        'There was an error submitting your bug report. Please try again.',
-        [{ text: 'OK' }],
-      )
+      const message =
+        error instanceof MiteError && error.isRateLimited
+          ? `Too many reports. Please try again in ${error.retryAfter ?? 60} seconds.`
+          : 'There was an error submitting your bug report. Please try again.'
+      Alert.alert('Submission Failed', message, [{ text: 'OK' }])
     } finally {
       setLoading(false)
     }
@@ -212,6 +216,17 @@ export default function BugReportScreen() {
                 </Pressable>
               ))}
             </View>
+          </View>
+
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>Attachments (Optional)</ThemedText>
+            <Pressable style={styles.attachButton} onPress={pickImages}>
+              <ThemedText>
+                {images?.length
+                  ? `${images.length} file${images.length > 1 ? 's' : ''} attached`
+                  : 'Attach Screenshots'}
+              </ThemedText>
+            </Pressable>
           </View>
 
           <View style={styles.section}>
@@ -326,6 +341,14 @@ const styles = StyleSheet.create({
   },
   section: {
     marginTop: 24,
+  },
+  attachButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    alignItems: 'center',
   },
   sectionTitle: {
     fontSize: 18,

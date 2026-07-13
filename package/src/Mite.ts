@@ -1,144 +1,188 @@
-import * as Device from 'expo-device'
-// import { NitroModules } from 'react-native-nitro-modules'
-import { BugReporter } from './BugReporter'
-import { ErrorReporter } from './ErrorReporter'
-// import type { MiteSDK as MiteSDKType } from './specs/MiteSDK.nitro'
+import { getDeviceInfo } from './device'
+import { MiteError } from './errors'
+import { HttpClient } from './http'
 import type {
-  ErrorReporterInterface,
+  BugReportAttachment,
+  BugReportPayload,
+  BugReportResult,
+  CreateFeatureRequestPayload,
+  CreateFeatureRequestResult,
+  FeatureRequest,
   GetReleasesOptions,
+  IdentifyPayload,
+  IdentifyResult,
   MiteConfig,
   Release,
-  ReleasesResponse,
-  SubmitBugReportPayload,
+  VoteFeatureRequestPayload,
+  VoteResult,
 } from './types'
-import { ApiClient } from './utils/client'
 
-// export const MiteSDK = NitroModules.createHybridObject<MiteSDKType>('MiteSDK')
+const DEFAULT_ENDPOINT = 'https://intent-okapi-412.convex.site'
+
+interface UploadedAttachment {
+  storage_id: string
+  file_type?: string
+  file_name?: string
+}
 
 export class Mite {
-  private deviceInfo: typeof Device
-  private initialized = false
-  private apiClient: ApiClient
-  private errorReporter: ErrorReporterInterface
-  private bugReporter: BugReporter
-  private nativeCrashHandlersEnabled = false
-  private apiKey?: string
+  private http: HttpClient
 
   constructor(config: MiteConfig) {
-    this.apiKey = config.apiKey
-    this.deviceInfo = Device
-    this.apiClient = ApiClient.getInstance({
-      timeout: config.timeout || 5000,
-      maxRetries: config.retries,
-      headers: config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {},
+    if (!config.apiKey) {
+      throw new MiteError('[Mite] apiKey is required. Create one in the Mite dashboard.')
+    }
+    this.http = new HttpClient({
+      baseUrl: config.endpoint ?? DEFAULT_ENDPOINT,
+      apiKey: config.apiKey,
+      timeout: config.timeout ?? 10000,
+      maxRetries: config.maxRetries ?? 2,
     })
-    const subConfig = { deviceInfo: this.deviceInfo, apiClient: this.apiClient }
-    this.errorReporter = new ErrorReporter(subConfig)
-    this.bugReporter = new BugReporter(subConfig)
-  }
-
-  init() {
-    if (this.initialized) {
-      return
-    }
-    this.errorReporter.init()
-    this.bugReporter.init()
-    // this.enableNativeCrashHandlers()
-    this.initialized = true
   }
 
   /**
-   * Enables native crash handlers to catch app crashes
+   * Submit a bug report. Device info is collected automatically and can be
+   * extended or overridden via `payload.deviceInfo`. Attachments are uploaded
+   * before the report is created.
+   * @throws {MiteError} when validation, auth, or the network fails
    */
-  enableNativeCrashHandlers() {
-    try {
-      if (!this.nativeCrashHandlersEnabled) {
-        console.log('[Mite] Installing native crash handlers')
-        // MiteSDK.installCrashHandlers()
-        this.nativeCrashHandlersEnabled = true
-      }
-    } catch (error) {
-      console.error('[Mite] Failed to install native crash handlers:', error)
-    }
+  async submitBug(payload: BugReportPayload): Promise<BugReportResult> {
+    const attachments = payload.attachments?.length
+      ? await this.uploadAttachments(payload.attachments)
+      : undefined
+
+    return this.http.post<BugReportResult>('/api/v1/bug-reports', {
+      title: payload.title,
+      description: payload.description,
+      user_identifier: payload.userIdentifier,
+      anonymous_id: payload.anonymousId,
+      reporter_name: payload.reporterName,
+      reporter_email: payload.reporterEmail,
+      steps_to_reproduce: payload.stepsToReproduce,
+      expected_behavior: payload.expectedBehavior,
+      actual_behavior: payload.actualBehavior,
+      priority: payload.priority,
+      app_version: payload.appVersion,
+      environment: payload.environment,
+      device_info: { ...getDeviceInfo(), ...payload.deviceInfo },
+      attachments,
+    })
   }
 
   /**
-   * Disables native crash handlers
+   * Create or update the profile of the current end user so reports and
+   * feedback can be tied to them.
+   * @throws {MiteError} when no identifier is provided or the request fails
    */
-  disableNativeCrashHandlers() {
-    try {
-      if (this.nativeCrashHandlersEnabled) {
-        console.log('[Mite] Removing native crash handlers')
-        // MiteSDK.removeCrashHandlers()
-        this.nativeCrashHandlersEnabled = false
-      }
-    } catch (error) {
-      console.error('[Mite] Failed to remove native crash handlers:', error)
-    }
-  }
-
-  /**
-   * Capture an error and send it to the server
-   * @param error
-   * @param additionalInfo
-   * @returns
-   */
-  async captureError(
-    error: Error | Record<string, unknown>,
-    additionalInfo: Record<string, unknown> = {},
-  ) {
-    return this.errorReporter.captureError(error, additionalInfo)
-  }
-
-  /**
-   * Capture a bug and send it to the server
-   * @param payload
-   * @returns
-   */
-  async submitBug(payload: Omit<SubmitBugReportPayload, 'appId' | 'deviceInfo'>) {
-    return this.bugReporter.sendBugReportToServer(payload)
-  }
-
-  async logError(error: Error, metadata: Record<string, unknown> = {}) {
-    return this.errorReporter.logError(error, metadata)
-  }
-
-  disable() {
-    this.errorReporter.disable()
-  }
-
-  enable() {
-    this.errorReporter.enable()
-  }
-
-  isEnabled(): boolean {
-    return this.errorReporter.isEnabled()
-  }
-
-  async getReleases(options: GetReleasesOptions = {}): Promise<Release[]> {
-    if (!this.apiKey) {
-      throw new Error(
-        '[Mite] API key is required to fetch releases. Please provide apiKey in MiteConfig.',
+  async identify(payload: IdentifyPayload): Promise<IdentifyResult> {
+    if (!payload.userIdentifier && !payload.anonymousId) {
+      throw new MiteError(
+        '[Mite] identify requires at least one of userIdentifier or anonymousId.',
       )
     }
-
-    const params = new URLSearchParams()
-    if (options.platform) {
-      params.append('platform', options.platform)
-    }
-    if (options.limit) {
-      params.append('limit', options.limit.toString())
-    }
-
-    const queryString = params.toString()
-    const url = `/api/v1/releases${queryString ? `?${queryString}` : ''}`
-
-    const response = await this.apiClient.get<ReleasesResponse>(url, {
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-      },
+    return this.http.post<IdentifyResult>('/api/v1/identify', {
+      user_identifier: payload.userIdentifier,
+      anonymous_id: payload.anonymousId,
+      email: payload.email,
+      name: payload.name,
+      app_version: payload.appVersion,
+      device_info: { ...getDeviceInfo(), ...payload.deviceInfo },
+      metadata: payload.metadata,
     })
+  }
 
+  /**
+   * Fetch published releases for the application.
+   * @throws {MiteError} when the request fails
+   */
+  async getReleases(options: GetReleasesOptions = {}): Promise<Release[]> {
+    const response = await this.http.get<{ releases: Release[] }>('/api/v1/releases', {
+      query: { platform: options.platform, limit: options.limit },
+    })
     return response.releases
+  }
+
+  /**
+   * Fetch feature requests, sorted by vote count.
+   * @throws {MiteError} when the request fails
+   */
+  async getFeatureRequests(): Promise<FeatureRequest[]> {
+    const response = await this.http.get<{ requests: FeatureRequest[] }>(
+      '/api/v1/feature-requests',
+    )
+    return response.requests
+  }
+
+  /**
+   * Create a feature request on behalf of an end user.
+   * @throws {MiteError} when validation or the request fails
+   */
+  async createFeatureRequest(
+    payload: CreateFeatureRequestPayload,
+  ): Promise<CreateFeatureRequestResult> {
+    return this.http.post<CreateFeatureRequestResult>('/api/v1/feature-requests', {
+      title: payload.title,
+      description: payload.description,
+      author_name: payload.authorName,
+      author_email: payload.authorEmail,
+    })
+  }
+
+  /**
+   * Toggle a vote on a feature request for the given voter.
+   * @throws {MiteError} when the request fails
+   */
+  async voteFeatureRequest(payload: VoteFeatureRequestPayload): Promise<VoteResult> {
+    return this.http.post<VoteResult>('/api/v1/feature-requests/vote', {
+      feature_request_id: payload.featureRequestId,
+      voter_email: payload.voterEmail,
+    })
+  }
+
+  /**
+   * Fetch the ids of feature requests the given voter has voted for.
+   * @throws {MiteError} when the request fails
+   */
+  async getVotedFeatureRequestIds(voterEmail: string): Promise<string[]> {
+    const response = await this.http.get<{ featureRequestIds: string[] }>(
+      '/api/v1/feature-requests/votes',
+      { query: { voter_email: voterEmail } },
+    )
+    return response.featureRequestIds
+  }
+
+  private async uploadAttachments(
+    attachments: BugReportAttachment[],
+  ): Promise<UploadedAttachment[]> {
+    return Promise.all(
+      attachments.map(async attachment => {
+        const { uploadUrl } = await this.http.post<{ uploadUrl: string }>(
+          '/api/v1/upload-url',
+        )
+
+        const file = await fetch(attachment.uri)
+        const blob = await file.blob()
+        const fileType = attachment.mimeType || blob.type || 'application/octet-stream'
+
+        const upload = await fetch(uploadUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': fileType },
+          body: blob,
+        })
+        if (!upload.ok) {
+          throw new MiteError(
+            `[Mite] Failed to upload attachment (status ${upload.status})`,
+            { status: upload.status },
+          )
+        }
+
+        const { storageId } = (await upload.json()) as { storageId: string }
+        return {
+          storage_id: storageId,
+          file_type: fileType,
+          file_name: attachment.fileName,
+        }
+      }),
+    )
   }
 }

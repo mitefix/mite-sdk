@@ -1,5 +1,5 @@
 import ParallaxScrollView from '@/components/ParallaxScrollView'
-import { type Release, useReleases } from '@mite/mite-sdk'
+import { type Release, useReleases } from '@usemite/mite-sdk'
 import {
   ActivityIndicator,
   Image,

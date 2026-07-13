@@ -1,115 +1,157 @@
-# MiteSDK
+# Mite SDK
 
-A React Native SDK for managing app releases and version tracking.
+React Native SDK for [Mite](https://github.com/mitefix/mite-sdk) — in-app bug reporting, user feedback, feature requests, and release notes.
 
 ## Installation
 
 ```bash
-npm install @mite/mite-sdk
+bun add @usemite/mite-sdk
 # or
-yarn add @mite/mite-sdk
-# or
-bun add @mite/mite-sdk
+npm install @usemite/mite-sdk
 ```
 
-## Setup
+The SDK has no runtime dependencies. It requires `expo-device`, `react`, and `react-native` as peers:
 
-### 1. Initialize Mite
+```bash
+bun add expo-device
+```
 
-Create a Mite instance and initialize it in your app's entry point:
+## Quick Start
 
-```typescript
-import { Mite, MiteProvider } from '@mite/mite-sdk'
+Create a `Mite` instance at your app's entry point and wrap your app in `MiteProvider`:
+
+```tsx
+import { Mite, MiteProvider } from '@usemite/mite-sdk'
 
 const mite = new Mite({
-  apiKey: process.env.EXPO_PUBLIC_MITE_API_KEY,
+  apiKey: process.env.EXPO_PUBLIC_MITE_API_KEY as string,
 })
-
-mite.init()
 
 export default function RootLayout() {
   return (
-    <MiteProvider miteInstance={mite}>
+    <MiteProvider instance={mite}>
       {/* Your app */}
     </MiteProvider>
   )
 }
 ```
 
-### 2. Configuration Options
+### Configuration
 
-```typescript
-interface MiteConfig {
-  apiKey?: string    // Your API key
-  endpoint?: string  // Custom backend endpoint (optional)
-  timeout?: number   // Request timeout in ms (default: 5000)
-  retries?: number   // Max retry attempts for failed requests
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `apiKey` | `string` | required | API key from the Mite dashboard |
+| `endpoint` | `string` | Mite API | Override the API base URL |
+| `timeout` | `number` | `10000` | Request timeout in milliseconds |
+| `maxRetries` | `number` | `2` | Retry attempts for failed reads (writes are never retried) |
+
+## Bug Reports
+
+```tsx
+import { useMite } from '@usemite/mite-sdk'
+
+function ReportScreen() {
+  const mite = useMite()
+
+  const submit = async () => {
+    const { id } = await mite.submitBug({
+      title: 'Crash when opening settings',
+      description: 'The app crashes every time I tap Settings.',
+      stepsToReproduce: '1. Open app\n2. Tap Settings',
+      priority: 'HIGH',
+      reporterEmail: 'user@example.com',
+      attachments: [{ uri: image.uri, fileName: image.fileName, mimeType: image.mimeType }],
+    })
+  }
 }
 ```
 
-## Usage
+Device information (OS, model, screen size, emulator status) is collected automatically and sent with every report. Extend or override it with `deviceInfo: { locale: 'en-US' }`.
 
-### useReleases Hook
+Attachments are local file URIs (for example from `expo-image-picker`); the SDK uploads them before creating the report.
 
-Fetch app releases with the `useReleases` hook:
+## Identify Users
 
-```typescript
-import { useReleases } from '@mite/mite-sdk'
+Tie reports and feedback to your users:
 
-export default function ReleasesScreen() {
-  const { releases, loading, error, refetch } = useReleases({
-    platform: 'ios',  // 'ios' | 'android' | 'all'
-    limit: 10,
-    enabled: true,
-  })
-
-  if (loading) return <Text>Loading...</Text>
-  if (error) return <Text>Error: {error.message}</Text>
-
-  return (
-    <FlatList
-      data={releases}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item }) => (
-        <View>
-          <Text>{item.version} (Build {item.versionCode})</Text>
-          <Text>{item.notes}</Text>
-        </View>
-      )}
-      onRefresh={refetch}
-      refreshing={loading}
-    />
-  )
-}
-```
-
-### Direct API Access
-
-You can also fetch releases directly using the Mite instance:
-
-```typescript
-import { useMite } from '@mite/mite-sdk'
-
-const mite = useMite()
-
-const releases = await mite.getReleases({
-  platform: 'android',
-  limit: 5,
+```ts
+await mite.identify({
+  userIdentifier: user.id,
+  email: user.email,
+  name: user.name,
 })
 ```
 
-### Release Object
+At least one of `userIdentifier` or `anonymousId` is required.
 
-```typescript
-interface Release {
-  id: string
-  version: string
-  versionCode: number
-  platform: 'ios' | 'android' | 'all'
-  notes?: string
-  releasedAt?: number
-  createdAt: number
+## Releases
+
+```tsx
+import { useReleases } from '@usemite/mite-sdk'
+
+function ReleasesScreen() {
+  const { releases, loading, error, refetch } = useReleases({ platform: 'ios', limit: 10 })
 }
+```
+
+The hook fetches on mount by default; pass `enabled: false` to defer until `refetch()` is called. Outside React, use `mite.getReleases(options)`.
+
+## Feature Requests
+
+```ts
+const requests = await mite.getFeatureRequests()
+
+await mite.createFeatureRequest({
+  title: 'Dark mode',
+  description: 'Please add a dark theme.',
+  authorName: 'Jane',
+  authorEmail: 'jane@example.com',
+})
+
+const { voted, voteCount } = await mite.voteFeatureRequest({
+  featureRequestId: requests[0].id,
+  voterEmail: 'jane@example.com',
+})
+
+const votedIds = await mite.getVotedFeatureRequestIds('jane@example.com')
+```
+
+Votes are a toggle: voting twice with the same email removes the vote.
+
+## Error Handling
+
+Every method throws a `MiteError` on failure:
+
+```ts
+import { MiteError } from '@usemite/mite-sdk'
+
+try {
+  await mite.submitBug({ title, description })
+} catch (error) {
+  if (error instanceof MiteError) {
+    if (error.isRateLimited) {
+      // error.retryAfter — seconds to wait
+    }
+    if (error.isAuthError) {
+      // invalid API key or missing scope
+    }
+    console.log(error.status, error.message)
+  }
+}
+```
+
+Failed reads (GET requests) are retried automatically with exponential backoff. Writes such as `submitBug` are never retried, so a report is never submitted twice.
+
+## Development
+
+```bash
+cd package
+bun typecheck   # typecheck library and tests
+bun test        # run tests
+bun run build   # build with react-native-builder-bob
+
+cd ../example
+bun start       # run the example app
 ```
 
 ## License

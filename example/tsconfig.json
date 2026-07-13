@@ -5,8 +5,8 @@
     "jsx": "react-jsx",
     "paths": {
       "@/*": ["./*"],
-      "@mite/mite-sdk": ["../package/src/index"],
-      "@mite/mite-sdk/*": ["../package/src/*"]
+      "@usemite/mite-sdk": ["../package/src/index"],
+      "@usemite/mite-sdk/*": ["../package/src/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]

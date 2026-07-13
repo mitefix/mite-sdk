@@ -5,15 +5,11 @@ import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
 import { useEffect } from 'react'
 import 'react-native-reanimated'
-import { Mite, MiteProvider } from '@mite/mite-sdk'
+import { Mite, MiteProvider } from '@usemite/mite-sdk'
 
 const mite = new Mite({
-  // publicKey: process.env.EXPO_PUBLIC_MITE_KEY!,
-  // appId: process.env.EXPO_PUBLIC_MITE_APP_ID!,
-  apiKey: process.env.EXPO_PUBLIC_MITE_API_KEY,
+  apiKey: process.env.EXPO_PUBLIC_MITE_API_KEY as string,
 })
-
-mite.init()
 
 SplashScreen.preventAutoHideAsync()
 
@@ -33,7 +29,7 @@ export default function RootLayout() {
   }
 
   return (
-    <MiteProvider miteInstance={mite}>
+    <MiteProvider instance={mite}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
