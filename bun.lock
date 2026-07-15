@@ -54,6 +54,7 @@
         "expo-router": "~55.0.12",
         "expo-splash-screen": "~55.0.17",
         "expo-status-bar": "~55.0.5",
+        "expo-store-review": "~55.0.16",
         "expo-symbols": "~55.0.7",
         "expo-system-ui": "~55.0.15",
         "expo-web-browser": "~55.0.14",
@@ -82,7 +83,7 @@
     },
     "package": {
       "name": "@usemite/mite-sdk",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "dependencies": {
         "axios": "^1.15.0",
       },
@@ -99,9 +100,13 @@
       },
       "peerDependencies": {
         "expo-device": "^8.0.10",
+        "expo-store-review": "*",
         "react": "^19.1.0",
         "react-native": "^0.81.5",
       },
+      "optionalPeers": [
+        "expo-store-review",
+      ],
     },
   },
   "packages": {
@@ -1608,6 +1613,8 @@
     "expo-splash-screen": ["expo-splash-screen@55.0.17", "", { "dependencies": { "@expo/prebuild-config": "^55.0.14" }, "peerDependencies": { "expo": "*" } }, "sha512-zVMYh6YvEhnmRI6WOKA82rxVo8eA4u3lzSF6qhXtgR9H9+idq3BhU0hZc0bqV/hOfGcYscrslj9G8aSM7d5ALg=="],
 
     "expo-status-bar": ["expo-status-bar@55.0.5", "", { "dependencies": { "react-native-is-edge-to-edge": "^1.2.1" }, "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-qb0c3rJO2b7CC0gUVGi1JYp92oLenWdYGyk8l4YQs6U+uaXUTPv6aaFa3KkT2HON10re3AxxPNJci8rsz6kPxg=="],
+
+    "expo-store-review": ["expo-store-review@55.0.16", "", { "peerDependencies": { "expo": "*", "react-native": "*" } }, "sha512-1vPnMhPaoInzXcNQy5GkIvssC2W2okAOdAtPbWMX2YuV1PKO3NR4jEcb/lxJRDvVyZPurIEDaFLFV00ShZnXzg=="],
 
     "expo-symbols": ["expo-symbols@55.0.7", "", { "dependencies": { "@expo-google-fonts/material-symbols": "^0.4.1", "sf-symbols-typescript": "^2.0.0" }, "peerDependencies": { "expo": "*", "expo-font": "*", "react": "*", "react-native": "*" } }, "sha512-y4ALLbncSGQzhFLw1PaIBbO39xzaw3ie249HmK6zK/WLJYfw4Z/9UU4iPKO3KCE4FyCKIzd+yRsvzvlri23YrQ=="],
 

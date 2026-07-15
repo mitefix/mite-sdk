@@ -3,8 +3,9 @@ import { ThemedView } from '@/components/ThemedView'
 import { IconSymbol } from '@/components/ui/IconSymbol'
 import type { IconSymbolName } from '@/components/ui/IconSymbol'
 import { useThemeColor } from '@/hooks/useThemeColor'
-import { useMite } from '@mite/mite-sdk'
-import { ScrollView, StyleSheet, View } from 'react-native'
+import { StoreReviewPrompt, useMite } from '@mite/mite-sdk'
+import { useState } from 'react'
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 function FeatureCard({
@@ -36,6 +37,7 @@ export default function HomeScreen() {
   const mite = useMite()
   const insets = useSafeAreaInsets()
   const tintColor = useThemeColor({ light: '#0a7ea4', dark: '#4fc3f7' }, 'tint')
+  const [reviewPromptVisible, setReviewPromptVisible] = useState(false)
 
   return (
     <ThemedView style={styles.container}>
@@ -100,8 +102,31 @@ export default function HomeScreen() {
             title="Offline Queue"
             description="Requests are queued when offline and sent when connectivity returns."
           />
+          <Pressable onPress={() => setReviewPromptVisible(true)}>
+            <FeatureCard
+              icon="star.fill"
+              title="Store Review Prompt"
+              description="Deflection prompt: happy users rate the app, unhappy users send feedback. Tap to try it."
+            />
+          </Pressable>
         </View>
       </ScrollView>
+
+      <StoreReviewPrompt
+        visible={reviewPromptVisible}
+        onClose={() => setReviewPromptVisible(false)}
+        onPositive={reviewRequested => {
+          if (!reviewRequested) {
+            Alert.alert(
+              'Store review unavailable',
+              'The native review dialog could not be requested on this device.',
+            )
+          }
+        }}
+        onFeedbackSubmitted={() => {
+          Alert.alert('Thanks!', 'Your feedback was submitted to Mite.')
+        }}
+      />
     </ThemedView>
   )
 }
