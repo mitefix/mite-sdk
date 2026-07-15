@@ -1,10 +1,27 @@
 import { Mite } from './Mite'
 import { MiteProvider, useMite } from './MiteProvider'
+import {
+  clearNavigationTrail,
+  getNavigationTrail,
+  recordNavigationBreadcrumb,
+} from './NavigationTracker'
 import { useBugReport } from './useBugReport'
 import { useFeatureRequests } from './useFeatureRequests'
+import { useMiteNavigationTracking } from './useMiteNavigationTracking'
 import { useReleases } from './useReleases'
 
-export { Mite, MiteProvider, useMite, useBugReport, useFeatureRequests, useReleases }
+export {
+  clearNavigationTrail,
+  getNavigationTrail,
+  Mite,
+  MiteProvider,
+  recordNavigationBreadcrumb,
+  useBugReport,
+  useFeatureRequests,
+  useMite,
+  useMiteNavigationTracking,
+  useReleases,
+}
 export type {
   CreateFeatureRequestPayload,
   CreateFeatureRequestResponse,
@@ -15,6 +32,7 @@ export type {
   MiteConfig,
   MiteIdentityStorage,
   MiteMMKVLikeStorage,
+  NavigationBreadcrumb,
   Release,
   GetReleasesOptions,
   SubmitBugReportPayload,
@@ -30,3 +48,4 @@ export type {
   UseFeatureRequestsResult,
 } from './useFeatureRequests'
 export type { UseReleasesOptions, UseReleasesResult } from './useReleases'
+export type { MiteNavigationContainerRefLike } from './useMiteNavigationTracking'
