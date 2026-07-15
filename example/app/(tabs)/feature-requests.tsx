@@ -2,7 +2,11 @@ import { ThemedText } from '@/components/ThemedText'
 import { ThemedView } from '@/components/ThemedView'
 import { InputWithLabel } from '@/components/ui/InputWithLabel'
 import { useThemeColor } from '@/hooks/useThemeColor'
-import { type FeatureRequest, useFeatureRequests, useMite } from '@mite/mite-sdk'
+import {
+  type FeatureRequest,
+  FeatureRequestsSheet,
+  useFeatureRequests,
+} from '@mite/mite-sdk'
 import { useMemo, useState } from 'react'
 import {
   ActivityIndicator,
@@ -41,13 +45,11 @@ function formatCreatedAt(createdAt: number): string {
 function FeatureRequestCard({
   request,
   hasVoted,
-  voterEmail,
   voting,
   onVote,
 }: {
   request: FeatureRequest
   hasVoted: boolean
-  voterEmail: string
   voting: boolean
   onVote: (requestId: string) => Promise<void>
 }) {
@@ -117,7 +119,7 @@ function FeatureRequestCard({
             <ThemedText
               style={[styles.voteButtonText, { color: hasVoted ? tintColor : mutedText }]}
             >
-              {hasVoted ? 'Undo vote' : voterEmail ? 'Vote' : 'Vote by email'}
+              {hasVoted ? 'Undo vote' : 'Vote'}
             </ThemedText>
           )}
         </TouchableOpacity>
@@ -127,29 +129,25 @@ function FeatureRequestCard({
 }
 
 export default function FeatureRequestsScreen() {
-  const mite = useMite()
   const insets = useSafeAreaInsets()
   const tintColor = useThemeColor({ light: '#0a7ea4', dark: '#4fc3f7' }, 'tint')
   const errorBg = useThemeColor({ light: '#FFEBEE', dark: '#3b1a1a' }, 'background')
 
-  const [voterEmail, setVoterEmail] = useState('')
   const [authorName, setAuthorName] = useState('')
-  const [authorEmail, setAuthorEmail] = useState('')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [votingRequestId, setVotingRequestId] = useState<string | null>(null)
 
-  const normalizedVoterEmail = useMemo(
-    () => voterEmail.trim().toLowerCase(),
-    [voterEmail],
-  )
-
-  const { featureRequests, votedFeatureRequestIds, loading, error, refetch } =
-    useFeatureRequests({
-      enabled: true,
-      voterEmail: normalizedVoterEmail || undefined,
-    })
+  const {
+    featureRequests,
+    votedFeatureRequestIds,
+    loading,
+    error,
+    refetch,
+    submitFeatureRequest,
+    submitting,
+    toggleVote,
+    votingFeatureRequestIds,
+  } = useFeatureRequests({ enabled: true })
 
   const votedSet = useMemo(
     () => new Set(votedFeatureRequestIds),
@@ -157,50 +155,30 @@ export default function FeatureRequestsScreen() {
   )
 
   const handleCreate = async () => {
-    if (!title.trim() || !authorName.trim() || !authorEmail.trim()) {
-      Alert.alert('Missing fields', 'Name, email, and title are required.')
+    if (!title.trim()) {
+      Alert.alert('Missing fields', 'Title is required.')
       return
     }
 
-    setSubmitting(true)
     try {
-      await mite.createFeatureRequest({
+      await submitFeatureRequest({
         title,
         description,
-        author_name: authorName,
-        author_email: authorEmail,
+        ...(authorName.trim() ? { author_name: authorName } : {}),
       })
       setTitle('')
       setDescription('')
-      if (!normalizedVoterEmail) {
-        setVoterEmail(authorEmail.trim().toLowerCase())
-      }
-      await refetch()
       Alert.alert('Request submitted', 'Your feature request is now on the board.')
     } catch {
       Alert.alert('Error', 'Failed to create feature request. Please try again.')
-    } finally {
-      setSubmitting(false)
     }
   }
 
   const handleVote = async (requestId: string) => {
-    if (!normalizedVoterEmail) {
-      Alert.alert('Email required', 'Enter your email above before voting.')
-      return
-    }
-
-    setVotingRequestId(requestId)
     try {
-      await mite.voteFeatureRequest({
-        feature_request_id: requestId,
-        voter_email: normalizedVoterEmail,
-      })
-      await refetch()
+      await toggleVote(requestId)
     } catch {
       Alert.alert('Error', 'Failed to update your vote. Please try again.')
-    } finally {
-      setVotingRequestId(null)
     }
   }
 
@@ -234,34 +212,30 @@ export default function FeatureRequestsScreen() {
           </View>
 
           <View style={styles.section}>
-            <ThemedText type="defaultSemiBold">Voting identity</ThemedText>
-            <InputWithLabel
-              label="Voter email"
-              placeholder="you@example.com"
-              autoCapitalize="none"
-              keyboardType="email-address"
-              value={voterEmail}
-              onChangeText={setVoterEmail}
-            />
+            <ThemedText type="defaultSemiBold">Feature requests sheet</ThemedText>
+            <ThemedText style={styles.subtitle} lightColor="#666" darkColor="#999">
+              The drop-in SDK sheet, tied to the current end user.
+            </ThemedText>
+            <FeatureRequestsSheet accentColor={tintColor}>
+              <View style={[styles.primaryButton, { backgroundColor: tintColor }]}>
+                <ThemedText
+                  style={styles.primaryButtonText}
+                  lightColor="#fff"
+                  darkColor="#fff"
+                >
+                  Open feature requests sheet
+                </ThemedText>
+              </View>
+            </FeatureRequestsSheet>
           </View>
 
           <View style={styles.section}>
             <ThemedText type="defaultSemiBold">Submit a feature request</ThemedText>
             <InputWithLabel
-              label="Your name"
-              required
+              label="Your name (optional)"
               placeholder="Taylor"
               value={authorName}
               onChangeText={setAuthorName}
-            />
-            <InputWithLabel
-              label="Your email"
-              required
-              placeholder="taylor@example.com"
-              autoCapitalize="none"
-              keyboardType="email-address"
-              value={authorEmail}
-              onChangeText={setAuthorEmail}
             />
             <InputWithLabel
               label="Title"
@@ -342,8 +316,7 @@ export default function FeatureRequestsScreen() {
                     key={request.id}
                     request={request}
                     hasVoted={votedSet.has(request.id)}
-                    voterEmail={normalizedVoterEmail}
-                    voting={votingRequestId === request.id}
+                    voting={votingFeatureRequestIds.includes(request.id)}
                     onVote={handleVote}
                   />
                 ))}
