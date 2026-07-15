@@ -39,8 +39,18 @@
   },
   "peerDependencies": {
     "expo-device": "^8.0.10",
+    "expo-sensors": "*",
     "react": "^19.1.0",
-    "react-native": "^0.81.5"
+    "react-native": "^0.81.5",
+    "react-native-view-shot": "*"
+  },
+  "peerDependenciesMeta": {
+    "expo-sensors": {
+      "optional": true
+    },
+    "react-native-view-shot": {
+      "optional": true
+    }
   },
   "dependencies": {
     "axios": "^1.15.0"
