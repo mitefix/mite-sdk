@@ -1,7 +1,7 @@
 import { ThemedText } from '@/components/ThemedText'
 import { ThemedView } from '@/components/ThemedView'
 import { useThemeColor } from '@/hooks/useThemeColor'
-import { type Release, useReleases } from '@mite/mite-sdk'
+import { type Release, WhatsNew, showWhatsNew, useReleases } from '@mite/mite-sdk'
 import {
   ActivityIndicator,
   ScrollView,
@@ -79,15 +79,25 @@ export default function ReleasesScreen() {
               App version history
             </ThemedText>
           </View>
-          <TouchableOpacity
-            style={[styles.refreshButton, { backgroundColor: tintColor }]}
-            onPress={refetch}
-            disabled={loading}
-          >
-            <ThemedText style={styles.refreshText} lightColor="#fff" darkColor="#fff">
-              Refresh
-            </ThemedText>
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={[styles.refreshButton, { backgroundColor: tintColor }]}
+              onPress={() => showWhatsNew()}
+            >
+              <ThemedText style={styles.refreshText} lightColor="#fff" darkColor="#fff">
+                What's New
+              </ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.refreshButton, { backgroundColor: tintColor }]}
+              onPress={refetch}
+              disabled={loading}
+            >
+              <ThemedText style={styles.refreshText} lightColor="#fff" darkColor="#fff">
+                Refresh
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {loading && (
@@ -131,6 +141,7 @@ export default function ReleasesScreen() {
           </View>
         )}
       </ScrollView>
+      <WhatsNew showOnFirstLaunch />
     </ThemedView>
   )
 }
@@ -152,6 +163,10 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     marginTop: 4,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 8,
   },
   refreshButton: {
     paddingHorizontal: 16,

@@ -35,6 +35,21 @@ export interface MiteConfig {
    * @default true
    */
   enableOfflineQueue?: boolean
+  /**
+   * Attach the recent navigation trail to submitted bug reports.
+   * @default true
+   */
+  enableNavigationBreadcrumbs?: boolean
+  /**
+   * Maximum number of screens kept in the navigation trail.
+   * @default 20
+   */
+  maxNavigationBreadcrumbs?: number
+}
+
+export interface NavigationBreadcrumb {
+  screen: string
+  timestamp: number
 }
 
 export type ReleasePlatform = 'ios' | 'android' | 'all'
@@ -76,8 +91,26 @@ export interface FeatureRequestsResponse {
 export interface CreateFeatureRequestPayload {
   title: string
   description?: string
-  author_name: string
-  author_email: string
+  /**
+   * Optional display name shown next to the request. When omitted, the
+   * request is attributed to the SDK's identified/anonymous end user.
+   */
+  author_name?: string
+  /**
+   * Optional contact email. The request is always tied to the SDK's
+   * identified/anonymous end user, so this is no longer required.
+   */
+  author_email?: string
+  /**
+   * Override the anonymous identifier. Defaults to the SDK's current
+   * anonymous id.
+   */
+  anonymous_id?: string
+  /**
+   * Override the user identifier. Defaults to the SDK's current
+   * identified user, when one exists.
+   */
+  user_identifier?: string
 }
 
 export interface CreateFeatureRequestResponse {
@@ -87,7 +120,21 @@ export interface CreateFeatureRequestResponse {
 
 export interface VoteFeatureRequestPayload {
   feature_request_id: string
-  voter_email: string
+  /**
+   * @deprecated Votes are tied to the SDK's identified/anonymous end user.
+   * Provide only to keep older email-based votes working.
+   */
+  voter_email?: string
+  /**
+   * Override the anonymous identifier. Defaults to the SDK's current
+   * anonymous id.
+   */
+  anonymous_id?: string
+  /**
+   * Override the user identifier. Defaults to the SDK's current
+   * identified user, when one exists.
+   */
+  user_identifier?: string
 }
 
 export interface VoteFeatureRequestResponse {
