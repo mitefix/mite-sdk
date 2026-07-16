@@ -5,6 +5,7 @@ import {
   getNavigationTrail,
   recordNavigationBreadcrumb,
 } from './NavigationTracker'
+import { FeatureRequestsSheet } from './components/FeatureRequestsSheet'
 import { WhatsNew, showWhatsNew } from './components/WhatsNew'
 import { useBugReport } from './useBugReport'
 import { useFeatureRequests } from './useFeatureRequests'
@@ -14,6 +15,7 @@ import { useWhatsNew } from './useWhatsNew'
 
 export {
   clearNavigationTrail,
+  FeatureRequestsSheet,
   getNavigationTrail,
   Mite,
   MiteProvider,
@@ -48,7 +50,9 @@ export type {
   VoteFeatureRequestResponse,
 } from './types'
 export type { UseBugReportResult, BugReportPayload } from './useBugReport'
+export type { FeatureRequestsSheetProps } from './components/FeatureRequestsSheet'
 export type {
+  SubmitFeatureRequestInput,
   UseFeatureRequestsOptions,
   UseFeatureRequestsResult,
 } from './useFeatureRequests'

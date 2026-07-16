@@ -283,49 +283,88 @@ export class Mite {
 
   /**
    * Create a feature request for the current application.
+   * The request is tied to the SDK's identified/anonymous end user.
    */
   async createFeatureRequest(
     payload: CreateFeatureRequestPayload,
   ): Promise<CreateFeatureRequestResponse> {
     this.requireApiKey('create feature requests')
+    await this.ensureIdentityReady()
+
+    const body: Record<string, unknown> = {
+      title: payload.title.trim(),
+      description: payload.description?.trim() ?? '',
+      anonymous_id: payload.anonymous_id ?? this.currentAnonymousId,
+    }
+
+    if (!this.identificationOptOut) {
+      const user_identifier = payload.user_identifier ?? this.currentUserIdentifier
+      if (user_identifier) {
+        body.user_identifier = user_identifier
+      }
+      if (payload.author_name?.trim()) {
+        body.author_name = payload.author_name.trim()
+      }
+      if (payload.author_email?.trim()) {
+        body.author_email = payload.author_email.trim().toLowerCase()
+      }
+    }
 
     return await this.apiClient.post<CreateFeatureRequestResponse>(
       '/api/v1/feature-requests',
-      {
-        title: payload.title.trim(),
-        description: payload.description?.trim() ?? '',
-        author_name: payload.author_name.trim(),
-        author_email: payload.author_email.trim().toLowerCase(),
-      },
+      body,
     )
   }
 
   /**
    * Toggle a vote on a feature request for the current application.
+   * The vote is tied to the SDK's identified/anonymous end user.
    */
   async voteFeatureRequest(
     payload: VoteFeatureRequestPayload,
   ): Promise<VoteFeatureRequestResponse> {
     this.requireApiKey('vote on feature requests')
+    await this.ensureIdentityReady()
+
+    const body: Record<string, unknown> = {
+      feature_request_id: payload.feature_request_id,
+      anonymous_id: payload.anonymous_id ?? this.currentAnonymousId,
+    }
+
+    if (!this.identificationOptOut) {
+      const user_identifier = payload.user_identifier ?? this.currentUserIdentifier
+      if (user_identifier) {
+        body.user_identifier = user_identifier
+      }
+      if (payload.voter_email?.trim()) {
+        body.voter_email = payload.voter_email.trim().toLowerCase()
+      }
+    }
 
     return await this.apiClient.post<VoteFeatureRequestResponse>(
       '/api/v1/feature-requests/vote',
-      {
-        feature_request_id: payload.feature_request_id,
-        voter_email: payload.voter_email.trim().toLowerCase(),
-      },
+      body,
     )
   }
 
   /**
-   * Fetch the feature requests already voted on by an email address.
+   * Fetch the feature requests already voted on by the SDK's
+   * identified/anonymous end user, or by an email address when provided.
    */
-  async getFeatureRequestVotes(voterEmail: string): Promise<string[]> {
+  async getFeatureRequestVotes(voterEmail?: string): Promise<string[]> {
     this.requireApiKey('fetch feature request votes')
+    await this.ensureIdentityReady()
 
-    const params = new URLSearchParams({
-      voter_email: voterEmail.trim().toLowerCase(),
-    })
+    const params = new URLSearchParams()
+
+    if (voterEmail?.trim()) {
+      params.append('voter_email', voterEmail.trim().toLowerCase())
+    } else {
+      params.append('anonymous_id', this.currentAnonymousId)
+      if (!this.identificationOptOut && this.currentUserIdentifier) {
+        params.append('user_identifier', this.currentUserIdentifier)
+      }
+    }
 
     const response = await this.apiClient.get<FeatureRequestVotesResponse>(
       `/api/v1/feature-requests/votes?${params.toString()}`,
