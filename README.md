@@ -50,6 +50,8 @@ interface MiteConfig {
   anonymousId?: string // Optional override for the generated anonymous user id
   identityStorage?: MiteIdentityStorage | MiteMMKVLikeStorage // AsyncStorage or MMKV instance
   identificationOptOut?: boolean // Start in anonymous-only mode
+  enableNavigationBreadcrumbs?: boolean // Attach the navigation trail to bug reports (default: true)
+  maxNavigationBreadcrumbs?: number // Screens kept in the navigation trail (default: 20)
 }
 ```
 
@@ -73,6 +75,47 @@ If the user opts out of being identified, switch the SDK into anonymous-only mod
 ```typescript
 await mite.setIdentificationOptOut(true)
 ```
+
+### 3. Navigation Breadcrumbs (optional)
+
+Mite can capture a trail of the screens visited before a bug report is submitted (a ring buffer of the last 20 by default) and attach it to the report under `environment.navigation_trail`. Both Expo Router and React Navigation are supported through one hook — neither library is required to use the SDK.
+
+**Expo Router** — add one line to your root layout:
+
+```tsx
+import { useNavigationContainerRef } from 'expo-router'
+import { useMiteNavigationTracking } from '@mite/mite-sdk'
+
+export default function RootLayout() {
+  useMiteNavigationTracking(useNavigationContainerRef())
+  // ...
+}
+```
+
+**React Navigation** — pass the container ref you already use:
+
+```tsx
+import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native'
+import { useMiteNavigationTracking } from '@mite/mite-sdk'
+
+function App() {
+  const navigationRef = useNavigationContainerRef()
+  useMiteNavigationTracking(navigationRef)
+
+  return <NavigationContainer ref={navigationRef}>{/* ... */}</NavigationContainer>
+}
+```
+
+If you use a custom navigation solution, record screens manually:
+
+```typescript
+import { recordNavigationBreadcrumb, clearNavigationTrail } from '@mite/mite-sdk'
+
+recordNavigationBreadcrumb('Settings')
+clearNavigationTrail() // e.g. on logout
+```
+
+Disable the feature or change the buffer size with `enableNavigationBreadcrumbs` and `maxNavigationBreadcrumbs` in `MiteConfig`.
 
 ## Usage
 
@@ -123,6 +166,36 @@ const releases = await mite.getReleases({
   platform: 'android',
   limit: 5,
 })
+```
+
+### What's New Widget
+
+Show published release notes in-app after an update. The widget tracks the last seen version locally and shows once per new app version. Release notes support a simple markdown subset (headings, bullet lists, bold, italic, inline code).
+
+```tsx
+import { WhatsNew, showWhatsNew } from '@mite/mite-sdk'
+
+export default function RootLayout() {
+  return (
+    <>
+      {/* your app */}
+      <WhatsNew />
+    </>
+  )
+}
+
+// Open it on demand (e.g. from a settings screen)
+showWhatsNew()
+```
+
+The current app version is detected via `expo-application` (falling back to `expo-constants`) when installed — both are optional peer dependencies — or can be passed explicitly with `currentVersion`. By default nothing is shown on a fresh install; opt in with `showOnFirstLaunch`.
+
+For a custom UI, use the `useWhatsNew` hook directly:
+
+```tsx
+import { useWhatsNew } from '@mite/mite-sdk'
+
+const { visible, releases, show, dismiss } = useWhatsNew({ platform: 'ios' })
 ```
 
 ### Feature Requests

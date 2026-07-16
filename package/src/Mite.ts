@@ -1,5 +1,6 @@
 import * as Device from 'expo-device'
 import { BugReporter } from './BugReporter'
+import { navigationTracker } from './NavigationTracker'
 import { OfflineQueue } from './OfflineQueue'
 import type {
   CreateFeatureRequestPayload,
@@ -24,6 +25,7 @@ import { generateAnonymousId } from './utils/identity'
 import { resolveIdentityStorage } from './utils/storage'
 
 const IDENTITY_STORAGE_KEY = '@mite/sdk-identity'
+const LAST_SEEN_RELEASE_STORAGE_KEY = '@mite/sdk-last-seen-release'
 
 interface PersistedIdentityState {
   anonymousId: string
@@ -101,6 +103,10 @@ export class Mite {
     this.bugReporter = new BugReporter({
       deviceInfo: this.deviceInfo,
       apiClient: this.apiClient,
+    })
+    navigationTracker.configure({
+      enabled: config.enableNavigationBreadcrumbs !== false,
+      maxBreadcrumbs: config.maxNavigationBreadcrumbs,
     })
     this.identityReady = this.hydrateIdentityState()
   }
@@ -368,6 +374,29 @@ export class Mite {
   }
 
   /**
+   * Get the app version last acknowledged by the "What's New" widget.
+   * Returns null when no version has been seen yet.
+   */
+  async getLastSeenReleaseVersion(): Promise<string | null> {
+    try {
+      return await this.identityStorage.getItem(LAST_SEEN_RELEASE_STORAGE_KEY)
+    } catch {
+      return null
+    }
+  }
+
+  /**
+   * Persist the app version acknowledged by the "What's New" widget.
+   */
+  async setLastSeenReleaseVersion(version: string): Promise<void> {
+    try {
+      await this.identityStorage.setItem(LAST_SEEN_RELEASE_STORAGE_KEY, version)
+    } catch {
+      console.warn('[Mite] Failed to persist the last seen release version')
+    }
+  }
+
+  /**
    * Manually flush the offline queue.
    */
   async flushOfflineQueue(): Promise<void> {
@@ -489,11 +518,13 @@ export class Mite {
       ...rest
     } = payload
     const anonymous_id = providedAnonymousId ?? this.currentAnonymousId
+    const environment = this.buildEnvironmentWithNavigationTrail(rest.environment)
 
     if (this.identificationOptOut) {
       return {
         ...rest,
         anonymous_id,
+        ...(environment ? { environment } : {}),
       }
     }
 
@@ -502,10 +533,26 @@ export class Mite {
     return {
       ...rest,
       anonymous_id,
+      ...(environment ? { environment } : {}),
       ...(user_identifier ? { user_identifier } : {}),
       ...(_reporterName ? { reporter_name: _reporterName } : {}),
       ...(_reporterEmail ? { reporter_email: _reporterEmail } : {}),
       ...(_deviceInfo ? { device_info: _deviceInfo } : {}),
+    }
+  }
+
+  private buildEnvironmentWithNavigationTrail(
+    environment?: Record<string, unknown>,
+  ): Record<string, unknown> | undefined {
+    const trail = navigationTracker.getTrail()
+
+    if (trail.length === 0) {
+      return environment
+    }
+
+    return {
+      ...environment,
+      navigation_trail: trail,
     }
   }
 

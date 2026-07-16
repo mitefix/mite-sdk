@@ -1,4 +1,5 @@
 import { Mite } from '../Mite'
+import { navigationTracker, recordNavigationBreadcrumb } from '../NavigationTracker'
 import type { MiteIdentityStorage } from '../types'
 
 // Mock axios
@@ -53,6 +54,8 @@ describe('Mite', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+    navigationTracker.configure({ enabled: true })
+    navigationTracker.clear()
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation()
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation()
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
@@ -678,6 +681,134 @@ describe('Mite', () => {
         {
           anonymous_id: mite.anonymousId,
         },
+        undefined,
+      )
+    })
+
+    it('attaches the navigation trail to the bug report environment', async () => {
+      mockAxios.post.mockResolvedValueOnce({
+        data: { id: 'bug-1', status: 'OPEN' },
+      })
+
+      const mite = new Mite({ apiKey: 'test' })
+      recordNavigationBreadcrumb('Home')
+      recordNavigationBreadcrumb('Settings')
+
+      await mite.submitBug({
+        title: 'Test Bug',
+        description: 'A test bug report',
+        environment: { build_type: 'debug' },
+      })
+
+      expect(mockAxios.post).toHaveBeenCalledWith(
+        '/api/v1/bug-reports',
+        expect.objectContaining({
+          environment: {
+            build_type: 'debug',
+            navigation_trail: [
+              expect.objectContaining({ screen: 'Home' }),
+              expect.objectContaining({ screen: 'Settings' }),
+            ],
+          },
+        }),
+        undefined,
+      )
+    })
+
+    it('attaches the navigation trail when opted out of identification', async () => {
+      mockAxios.post.mockResolvedValue({ data: { id: 'bug-1', status: 'OPEN' } })
+
+      const mite = new Mite({ apiKey: 'test' })
+      await mite.setIdentificationOptOut(true)
+      recordNavigationBreadcrumb('Home')
+
+      await mite.submitBug({
+        title: 'Test Bug',
+        description: 'A test bug report',
+      })
+
+      expect(mockAxios.post).toHaveBeenLastCalledWith(
+        '/api/v1/bug-reports',
+        expect.objectContaining({
+          environment: {
+            navigation_trail: [expect.objectContaining({ screen: 'Home' })],
+          },
+        }),
+        undefined,
+      )
+    })
+
+    it('omits the navigation trail when no breadcrumbs were recorded', async () => {
+      mockAxios.post.mockResolvedValueOnce({
+        data: { id: 'bug-1', status: 'OPEN' },
+      })
+
+      const mite = new Mite({ apiKey: 'test' })
+      await mite.submitBug({
+        title: 'Test Bug',
+        description: 'A test bug report',
+      })
+
+      const lastCall = mockAxios.post.mock.calls.at(-1)?.[1]
+      expect(lastCall).toEqual(
+        expect.not.objectContaining({
+          environment: expect.anything(),
+        }),
+      )
+    })
+
+    it('does not record breadcrumbs when enableNavigationBreadcrumbs=false', async () => {
+      mockAxios.post.mockResolvedValueOnce({
+        data: { id: 'bug-1', status: 'OPEN' },
+      })
+
+      const mite = new Mite({
+        apiKey: 'test',
+        enableNavigationBreadcrumbs: false,
+      })
+      recordNavigationBreadcrumb('Home')
+
+      await mite.submitBug({
+        title: 'Test Bug',
+        description: 'A test bug report',
+      })
+
+      const lastCall = mockAxios.post.mock.calls.at(-1)?.[1]
+      expect(lastCall).toEqual(
+        expect.not.objectContaining({
+          environment: expect.anything(),
+        }),
+      )
+    })
+
+    it('caps the navigation trail with maxNavigationBreadcrumbs', async () => {
+      mockAxios.post.mockResolvedValueOnce({
+        data: { id: 'bug-1', status: 'OPEN' },
+      })
+
+      const mite = new Mite({
+        apiKey: 'test',
+        maxNavigationBreadcrumbs: 2,
+      })
+      recordNavigationBreadcrumb('Home')
+      recordNavigationBreadcrumb('Settings')
+      recordNavigationBreadcrumb('Profile')
+
+      await mite.submitBug({
+        title: 'Test Bug',
+        description: 'A test bug report',
+      })
+
+      expect(mockAxios.post).toHaveBeenCalledWith(
+        '/api/v1/bug-reports',
+        expect.objectContaining({
+          environment: {
+            navigation_trail: [
+              expect.objectContaining({ screen: 'Settings' }),
+              expect.objectContaining({ screen: 'Profile' }),
+            ],
+          },
+        }),
         undefined,
       )
     })

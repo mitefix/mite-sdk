@@ -35,6 +35,21 @@ export interface MiteConfig {
    * @default true
    */
   enableOfflineQueue?: boolean
+  /**
+   * Attach the recent navigation trail to submitted bug reports.
+   * @default true
+   */
+  enableNavigationBreadcrumbs?: boolean
+  /**
+   * Maximum number of screens kept in the navigation trail.
+   * @default 20
+   */
+  maxNavigationBreadcrumbs?: number
+}
+
+export interface NavigationBreadcrumb {
+  screen: string
+  timestamp: number
 }
 
 export type ReleasePlatform = 'ios' | 'android' | 'all'
