@@ -1,4 +1,5 @@
 import { Mite } from '../Mite'
+import { navigationTracker, recordNavigationBreadcrumb } from '../NavigationTracker'
 import type { MiteIdentityStorage } from '../types'
 
 // Mock axios
@@ -53,6 +54,8 @@ describe('Mite', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+    navigationTracker.configure({ enabled: true })
+    navigationTracker.clear()
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation()
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation()
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
@@ -327,7 +330,7 @@ describe('Mite', () => {
       expect(mockAxios.get).toHaveBeenCalledWith('/api/v1/feature-requests', undefined)
     })
 
-    it('creates feature requests with normalized author email', async () => {
+    it('creates feature requests tied to the anonymous id', async () => {
       mockAxios.post.mockResolvedValueOnce({
         data: { id: 'fr_1', status: 'OPEN' },
       })
@@ -336,8 +339,6 @@ describe('Mite', () => {
       const result = await mite.createFeatureRequest({
         title: ' Offline mode ',
         description: ' Cache updates locally ',
-        author_name: ' Test User ',
-        author_email: 'USER@EXAMPLE.COM ',
       })
 
       expect(result).toEqual({ id: 'fr_1', status: 'OPEN' })
@@ -346,6 +347,30 @@ describe('Mite', () => {
         {
           title: 'Offline mode',
           description: 'Cache updates locally',
+          anonymous_id: mite.anonymousId,
+        },
+        undefined,
+      )
+    })
+
+    it('creates feature requests with normalized optional author fields', async () => {
+      mockAxios.post.mockResolvedValueOnce({
+        data: { id: 'fr_1', status: 'OPEN' },
+      })
+
+      const mite = new Mite({ apiKey: 'test' })
+      await mite.createFeatureRequest({
+        title: ' Offline mode ',
+        author_name: ' Test User ',
+        author_email: 'USER@EXAMPLE.COM ',
+      })
+
+      expect(mockAxios.post).toHaveBeenCalledWith(
+        '/api/v1/feature-requests',
+        {
+          title: 'Offline mode',
+          description: '',
+          anonymous_id: mite.anonymousId,
           author_name: 'Test User',
           author_email: 'user@example.com',
         },
@@ -353,7 +378,51 @@ describe('Mite', () => {
       )
     })
 
-    it('votes on feature requests with normalized voter email', async () => {
+    it('includes the identified user id when creating feature requests', async () => {
+      mockAxios.post
+        .mockResolvedValueOnce({ data: { id: '123', created: true } })
+        .mockResolvedValueOnce({ data: { id: 'fr_1', status: 'OPEN' } })
+
+      const mite = new Mite({ apiKey: 'test' })
+      await mite.identify({ user_identifier: 'user1' })
+      await mite.createFeatureRequest({ title: 'Offline mode' })
+
+      expect(mockAxios.post).toHaveBeenLastCalledWith(
+        '/api/v1/feature-requests',
+        {
+          title: 'Offline mode',
+          description: '',
+          anonymous_id: mite.anonymousId,
+          user_identifier: 'user1',
+        },
+        undefined,
+      )
+    })
+
+    it('omits identified author fields when opted out', async () => {
+      mockAxios.post.mockResolvedValue({ data: { id: 'fr_1', status: 'OPEN' } })
+
+      const mite = new Mite({ apiKey: 'test' })
+      await mite.identify({ user_identifier: 'user1' })
+      await mite.setIdentificationOptOut(true)
+      await mite.createFeatureRequest({
+        title: 'Offline mode',
+        author_name: 'Test User',
+        author_email: 'user@example.com',
+      })
+
+      expect(mockAxios.post).toHaveBeenLastCalledWith(
+        '/api/v1/feature-requests',
+        {
+          title: 'Offline mode',
+          description: '',
+          anonymous_id: mite.anonymousId,
+        },
+        undefined,
+      )
+    })
+
+    it('votes on feature requests tied to the anonymous id', async () => {
       mockAxios.post.mockResolvedValueOnce({
         data: { voted: true, voteCount: 4 },
       })
@@ -361,7 +430,6 @@ describe('Mite', () => {
       const mite = new Mite({ apiKey: 'test' })
       const result = await mite.voteFeatureRequest({
         feature_request_id: 'fr_1',
-        voter_email: 'USER@EXAMPLE.COM ',
       })
 
       expect(result).toEqual({ voted: true, voteCount: 4 })
@@ -369,8 +437,65 @@ describe('Mite', () => {
         '/api/v1/feature-requests/vote',
         {
           feature_request_id: 'fr_1',
+          anonymous_id: mite.anonymousId,
+        },
+        undefined,
+      )
+    })
+
+    it('includes the identified user id when voting', async () => {
+      mockAxios.post
+        .mockResolvedValueOnce({ data: { id: '123', created: true } })
+        .mockResolvedValueOnce({ data: { voted: true, voteCount: 4 } })
+
+      const mite = new Mite({ apiKey: 'test' })
+      await mite.identify({ user_identifier: 'user1' })
+      await mite.voteFeatureRequest({ feature_request_id: 'fr_1' })
+
+      expect(mockAxios.post).toHaveBeenLastCalledWith(
+        '/api/v1/feature-requests/vote',
+        {
+          feature_request_id: 'fr_1',
+          anonymous_id: mite.anonymousId,
+          user_identifier: 'user1',
+        },
+        undefined,
+      )
+    })
+
+    it('keeps supporting legacy email-based votes', async () => {
+      mockAxios.post.mockResolvedValueOnce({
+        data: { voted: true, voteCount: 4 },
+      })
+
+      const mite = new Mite({ apiKey: 'test' })
+      await mite.voteFeatureRequest({
+        feature_request_id: 'fr_1',
+        voter_email: 'USER@EXAMPLE.COM ',
+      })
+
+      expect(mockAxios.post).toHaveBeenCalledWith(
+        '/api/v1/feature-requests/vote',
+        {
+          feature_request_id: 'fr_1',
+          anonymous_id: mite.anonymousId,
           voter_email: 'user@example.com',
         },
+        undefined,
+      )
+    })
+
+    it('fetches voted feature request ids for the current identity', async () => {
+      mockAxios.get.mockResolvedValueOnce({
+        data: { featureRequestIds: ['fr_1', 'fr_2'] },
+      })
+
+      const mite = new Mite({ apiKey: 'test' })
+      const result = await mite.getFeatureRequestVotes()
+
+      expect(result).toEqual(['fr_1', 'fr_2'])
+      expect(mockAxios.get).toHaveBeenCalledWith(
+        `/api/v1/feature-requests/votes?anonymous_id=${encodeURIComponent(mite.anonymousId)}`,
         undefined,
       )
     })
@@ -556,6 +681,134 @@ describe('Mite', () => {
         {
           anonymous_id: mite.anonymousId,
         },
+        undefined,
+      )
+    })
+
+    it('attaches the navigation trail to the bug report environment', async () => {
+      mockAxios.post.mockResolvedValueOnce({
+        data: { id: 'bug-1', status: 'OPEN' },
+      })
+
+      const mite = new Mite({ apiKey: 'test' })
+      recordNavigationBreadcrumb('Home')
+      recordNavigationBreadcrumb('Settings')
+
+      await mite.submitBug({
+        title: 'Test Bug',
+        description: 'A test bug report',
+        environment: { build_type: 'debug' },
+      })
+
+      expect(mockAxios.post).toHaveBeenCalledWith(
+        '/api/v1/bug-reports',
+        expect.objectContaining({
+          environment: {
+            build_type: 'debug',
+            navigation_trail: [
+              expect.objectContaining({ screen: 'Home' }),
+              expect.objectContaining({ screen: 'Settings' }),
+            ],
+          },
+        }),
+        undefined,
+      )
+    })
+
+    it('attaches the navigation trail when opted out of identification', async () => {
+      mockAxios.post.mockResolvedValue({ data: { id: 'bug-1', status: 'OPEN' } })
+
+      const mite = new Mite({ apiKey: 'test' })
+      await mite.setIdentificationOptOut(true)
+      recordNavigationBreadcrumb('Home')
+
+      await mite.submitBug({
+        title: 'Test Bug',
+        description: 'A test bug report',
+      })
+
+      expect(mockAxios.post).toHaveBeenLastCalledWith(
+        '/api/v1/bug-reports',
+        expect.objectContaining({
+          environment: {
+            navigation_trail: [expect.objectContaining({ screen: 'Home' })],
+          },
+        }),
+        undefined,
+      )
+    })
+
+    it('omits the navigation trail when no breadcrumbs were recorded', async () => {
+      mockAxios.post.mockResolvedValueOnce({
+        data: { id: 'bug-1', status: 'OPEN' },
+      })
+
+      const mite = new Mite({ apiKey: 'test' })
+      await mite.submitBug({
+        title: 'Test Bug',
+        description: 'A test bug report',
+      })
+
+      const lastCall = mockAxios.post.mock.calls.at(-1)?.[1]
+      expect(lastCall).toEqual(
+        expect.not.objectContaining({
+          environment: expect.anything(),
+        }),
+      )
+    })
+
+    it('does not record breadcrumbs when enableNavigationBreadcrumbs=false', async () => {
+      mockAxios.post.mockResolvedValueOnce({
+        data: { id: 'bug-1', status: 'OPEN' },
+      })
+
+      const mite = new Mite({
+        apiKey: 'test',
+        enableNavigationBreadcrumbs: false,
+      })
+      recordNavigationBreadcrumb('Home')
+
+      await mite.submitBug({
+        title: 'Test Bug',
+        description: 'A test bug report',
+      })
+
+      const lastCall = mockAxios.post.mock.calls.at(-1)?.[1]
+      expect(lastCall).toEqual(
+        expect.not.objectContaining({
+          environment: expect.anything(),
+        }),
+      )
+    })
+
+    it('caps the navigation trail with maxNavigationBreadcrumbs', async () => {
+      mockAxios.post.mockResolvedValueOnce({
+        data: { id: 'bug-1', status: 'OPEN' },
+      })
+
+      const mite = new Mite({
+        apiKey: 'test',
+        maxNavigationBreadcrumbs: 2,
+      })
+      recordNavigationBreadcrumb('Home')
+      recordNavigationBreadcrumb('Settings')
+      recordNavigationBreadcrumb('Profile')
+
+      await mite.submitBug({
+        title: 'Test Bug',
+        description: 'A test bug report',
+      })
+
+      expect(mockAxios.post).toHaveBeenCalledWith(
+        '/api/v1/bug-reports',
+        expect.objectContaining({
+          environment: {
+            navigation_trail: [
+              expect.objectContaining({ screen: 'Settings' }),
+              expect.objectContaining({ screen: 'Profile' }),
+            ],
+          },
+        }),
         undefined,
       )
     })

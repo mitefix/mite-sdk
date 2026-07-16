@@ -1,10 +1,15 @@
 import { useFonts } from 'expo-font'
-import { Stack } from 'expo-router'
+import { Stack, useNavigationContainerRef } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
 import { useEffect } from 'react'
 import 'react-native-reanimated'
-import { Mite, MiteProvider, ShakeToReport } from '@mite/mite-sdk'
+import {
+  Mite,
+  MiteProvider,
+  ShakeToReport,
+  useMiteNavigationTracking,
+} from '@mite/mite-sdk'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const mite = new Mite({
@@ -17,6 +22,7 @@ mite.init()
 SplashScreen.preventAutoHideAsync()
 
 export default function RootLayout() {
+  useMiteNavigationTracking(useNavigationContainerRef())
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   })

@@ -19,6 +19,7 @@ const MAPPING = {
   'shippingbox.fill': 'inventory',
   'person.fill': 'person',
   'wifi.slash': 'wifi-off',
+  'star.fill': 'star',
 } as Partial<
   Record<
     Extract<import('expo-symbols').SymbolViewProps['name'], string>,
