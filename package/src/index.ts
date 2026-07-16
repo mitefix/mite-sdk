@@ -6,6 +6,7 @@ import {
   recordNavigationBreadcrumb,
 } from './NavigationTracker'
 import { FeatureRequestsSheet } from './components/FeatureRequestsSheet'
+import { StoreReviewPrompt } from './components/StoreReviewPrompt'
 import { WhatsNew, showWhatsNew } from './components/WhatsNew'
 import { useBugReport } from './useBugReport'
 import { useFeatureRequests } from './useFeatureRequests'
@@ -21,6 +22,7 @@ export {
   MiteProvider,
   recordNavigationBreadcrumb,
   showWhatsNew,
+  StoreReviewPrompt,
   useBugReport,
   useFeatureRequests,
   useMite,
@@ -57,6 +59,7 @@ export type {
   UseFeatureRequestsResult,
 } from './useFeatureRequests'
 export type { UseReleasesOptions, UseReleasesResult } from './useReleases'
+export type { StoreReviewPromptProps } from './components/StoreReviewPrompt'
 export type { MiteNavigationContainerRefLike } from './useMiteNavigationTracking'
 export type { UseWhatsNewOptions, UseWhatsNewResult } from './useWhatsNew'
 export type { WhatsNewProps } from './components/WhatsNew'

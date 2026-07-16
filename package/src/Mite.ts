@@ -23,6 +23,7 @@ import { ApiClient } from './utils/client'
 import { type FlatStringRecord, normalizeDeviceInfo } from './utils/deviceInfo'
 import { generateAnonymousId } from './utils/identity'
 import { resolveIdentityStorage } from './utils/storage'
+import { isStoreReviewAvailable, requestStoreReview } from './utils/storeReview'
 
 const IDENTITY_STORAGE_KEY = '@mite/sdk-identity'
 const LAST_SEEN_RELEASE_STORAGE_KEY = '@mite/sdk-last-seen-release'
@@ -371,6 +372,23 @@ export class Mite {
     )
 
     return response.featureRequestIds
+  }
+
+  /**
+   * Check whether the native store review dialog can be requested.
+   * Requires the optional expo-store-review peer dependency.
+   */
+  async isStoreReviewAvailable(): Promise<boolean> {
+    return await isStoreReviewAvailable()
+  }
+
+  /**
+   * Request the native store review dialog (App Store / Play Store).
+   * Resolves to true when the request was made. Safely no-ops and resolves
+   * to false when the optional expo-store-review peer dependency is missing.
+   */
+  async requestStoreReview(): Promise<boolean> {
+    return await requestStoreReview()
   }
 
   /**

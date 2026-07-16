@@ -240,6 +240,61 @@ const { featureRequests, votedFeatureRequestIds, loading, refetch } =
   })
 ```
 
+### Store Review Prompt
+
+Ask users if they are enjoying the app. Happy users are routed to the native
+store review dialog, unhappy users are routed into a Mite feedback form
+instead of the store.
+
+This feature uses the optional [`expo-store-review`](https://docs.expo.dev/versions/latest/sdk/storereview/)
+peer dependency:
+
+```sh
+npx expo install expo-store-review
+```
+
+If `expo-store-review` is not installed, the SDK logs a `[Mite]` warning and
+skips the store review request instead of crashing.
+
+```typescript
+import { StoreReviewPrompt } from '@mite/mite-sdk'
+
+export default function App() {
+  const [visible, setVisible] = useState(false)
+
+  return (
+    <>
+      <Button title="Rate us" onPress={() => setVisible(true)} />
+      <StoreReviewPrompt
+        visible={visible}
+        onClose={() => setVisible(false)}
+        onPositive={(reviewRequested) => console.log({ reviewRequested })}
+        onFeedbackSubmitted={(response) => console.log(response.id)}
+      />
+    </>
+  )
+}
+```
+
+By default, a negative answer opens a built-in feedback form that submits a
+bug report through `mite.submitBug`. Pass `onNegative` to route users into
+your own bug/feedback flow instead:
+
+```tsx
+<StoreReviewPrompt
+  visible={visible}
+  onClose={() => setVisible(false)}
+  onNegative={() => router.push('/report-bug')}
+/>
+```
+
+You can also trigger the store review dialog imperatively:
+
+```typescript
+const available = await mite.isStoreReviewAvailable()
+const reviewRequested = await mite.requestStoreReview()
+```
+
 ### Release Object
 
 ```typescript
