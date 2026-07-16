@@ -1,5 +1,6 @@
 import * as Device from 'expo-device'
 import { BugReporter } from './BugReporter'
+import { navigationTracker } from './NavigationTracker'
 import { OfflineQueue } from './OfflineQueue'
 import type {
   CreateFeatureRequestPayload,
@@ -102,6 +103,10 @@ export class Mite {
     this.bugReporter = new BugReporter({
       deviceInfo: this.deviceInfo,
       apiClient: this.apiClient,
+    })
+    navigationTracker.configure({
+      enabled: config.enableNavigationBreadcrumbs !== false,
+      maxBreadcrumbs: config.maxNavigationBreadcrumbs,
     })
     this.identityReady = this.hydrateIdentityState()
   }
@@ -474,11 +479,13 @@ export class Mite {
       ...rest
     } = payload
     const anonymous_id = providedAnonymousId ?? this.currentAnonymousId
+    const environment = this.buildEnvironmentWithNavigationTrail(rest.environment)
 
     if (this.identificationOptOut) {
       return {
         ...rest,
         anonymous_id,
+        ...(environment ? { environment } : {}),
       }
     }
 
@@ -487,10 +494,26 @@ export class Mite {
     return {
       ...rest,
       anonymous_id,
+      ...(environment ? { environment } : {}),
       ...(user_identifier ? { user_identifier } : {}),
       ...(_reporterName ? { reporter_name: _reporterName } : {}),
       ...(_reporterEmail ? { reporter_email: _reporterEmail } : {}),
       ...(_deviceInfo ? { device_info: _deviceInfo } : {}),
+    }
+  }
+
+  private buildEnvironmentWithNavigationTrail(
+    environment?: Record<string, unknown>,
+  ): Record<string, unknown> | undefined {
+    const trail = navigationTracker.getTrail()
+
+    if (trail.length === 0) {
+      return environment
+    }
+
+    return {
+      ...environment,
+      navigation_trail: trail,
     }
   }
 
