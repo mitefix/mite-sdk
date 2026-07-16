@@ -168,6 +168,36 @@ const releases = await mite.getReleases({
 })
 ```
 
+### What's New Widget
+
+Show published release notes in-app after an update. The widget tracks the last seen version locally and shows once per new app version. Release notes support a simple markdown subset (headings, bullet lists, bold, italic, inline code).
+
+```tsx
+import { WhatsNew, showWhatsNew } from '@mite/mite-sdk'
+
+export default function RootLayout() {
+  return (
+    <>
+      {/* your app */}
+      <WhatsNew />
+    </>
+  )
+}
+
+// Open it on demand (e.g. from a settings screen)
+showWhatsNew()
+```
+
+The current app version is detected via `expo-application` (falling back to `expo-constants`) when installed — both are optional peer dependencies — or can be passed explicitly with `currentVersion`. By default nothing is shown on a fresh install; opt in with `showOnFirstLaunch`.
+
+For a custom UI, use the `useWhatsNew` hook directly:
+
+```tsx
+import { useWhatsNew } from '@mite/mite-sdk'
+
+const { visible, releases, show, dismiss } = useWhatsNew({ platform: 'ios' })
+```
+
 ### Feature Requests
 
 Fetch the feature request board for your app:

@@ -39,6 +39,8 @@
   },
   "peerDependencies": {
     "@react-navigation/native": ">=6.0.0",
+    "expo-application": ">=6.0.0",
+    "expo-constants": ">=17.0.0",
     "expo-device": "^8.0.10",
     "expo-router": ">=3.0.0",
     "react": "^19.1.0",
@@ -46,6 +48,12 @@
   },
   "peerDependenciesMeta": {
     "@react-navigation/native": {
+      "optional": true
+    },
+    "expo-application": {
+      "optional": true
+    },
+    "expo-constants": {
       "optional": true
     },
     "expo-router": {

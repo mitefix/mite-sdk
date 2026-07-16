@@ -25,6 +25,7 @@ import { generateAnonymousId } from './utils/identity'
 import { resolveIdentityStorage } from './utils/storage'
 
 const IDENTITY_STORAGE_KEY = '@mite/sdk-identity'
+const LAST_SEEN_RELEASE_STORAGE_KEY = '@mite/sdk-last-seen-release'
 
 interface PersistedIdentityState {
   anonymousId: string
@@ -331,6 +332,29 @@ export class Mite {
     )
 
     return response.featureRequestIds
+  }
+
+  /**
+   * Get the app version last acknowledged by the "What's New" widget.
+   * Returns null when no version has been seen yet.
+   */
+  async getLastSeenReleaseVersion(): Promise<string | null> {
+    try {
+      return await this.identityStorage.getItem(LAST_SEEN_RELEASE_STORAGE_KEY)
+    } catch {
+      return null
+    }
+  }
+
+  /**
+   * Persist the app version acknowledged by the "What's New" widget.
+   */
+  async setLastSeenReleaseVersion(version: string): Promise<void> {
+    try {
+      await this.identityStorage.setItem(LAST_SEEN_RELEASE_STORAGE_KEY, version)
+    } catch {
+      console.warn('[Mite] Failed to persist the last seen release version')
+    }
   }
 
   /**
