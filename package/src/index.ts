@@ -5,7 +5,10 @@ import {
   getNavigationTrail,
   recordNavigationBreadcrumb,
 } from './NavigationTracker'
+import { ShakeDetector } from './ShakeDetector'
 import { FeatureRequestsSheet } from './components/FeatureRequestsSheet'
+import { ScreenshotAnnotator } from './components/ScreenshotAnnotator'
+import { ShakeToReport } from './components/ShakeToReport'
 import { StoreReviewPrompt } from './components/StoreReviewPrompt'
 import { WhatsNew, showWhatsNew } from './components/WhatsNew'
 import { useBugReport } from './useBugReport'
@@ -21,6 +24,9 @@ export {
   Mite,
   MiteProvider,
   recordNavigationBreadcrumb,
+  ScreenshotAnnotator,
+  ShakeDetector,
+  ShakeToReport,
   showWhatsNew,
   StoreReviewPrompt,
   useBugReport,
@@ -59,6 +65,9 @@ export type {
   UseFeatureRequestsResult,
 } from './useFeatureRequests'
 export type { UseReleasesOptions, UseReleasesResult } from './useReleases'
+export type { ScreenshotAnnotatorProps } from './components/ScreenshotAnnotator'
+export type { ShakeToReportProps } from './components/ShakeToReport'
+export type { ShakeDetectorOptions } from './ShakeDetector'
 export type { StoreReviewPromptProps } from './components/StoreReviewPrompt'
 export type { MiteNavigationContainerRefLike } from './useMiteNavigationTracking'
 export type { UseWhatsNewOptions, UseWhatsNewResult } from './useWhatsNew'

@@ -4,7 +4,12 @@ import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
 import { useEffect } from 'react'
 import 'react-native-reanimated'
-import { Mite, MiteProvider, useMiteNavigationTracking } from '@mite/mite-sdk'
+import {
+  Mite,
+  MiteProvider,
+  ShakeToReport,
+  useMiteNavigationTracking,
+} from '@mite/mite-sdk'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const mite = new Mite({
@@ -38,6 +43,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
+      <ShakeToReport showFloatingButton />
       <StatusBar style="auto" />
     </MiteProvider>
   )
