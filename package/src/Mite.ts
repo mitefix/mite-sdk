@@ -434,6 +434,13 @@ export class Mite {
     return this.currentAnonymousId
   }
 
+  /**
+   * The currently identified end user, when one exists.
+   */
+  get userIdentifier(): string | undefined {
+    return this.currentUserIdentifier
+  }
+
   get isIdentificationOptedOut(): boolean {
     return this.identificationOptOut
   }

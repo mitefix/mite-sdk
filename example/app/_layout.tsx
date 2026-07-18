@@ -4,13 +4,13 @@ import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
 import { useEffect } from 'react'
 import 'react-native-reanimated'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import {
   Mite,
   MiteProvider,
   ShakeToReport,
   useMiteNavigationTracking,
-} from '@mite/mite-sdk'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+} from '@usemite/mite-sdk'
 
 const mite = new Mite({
   apiKey: process.env.EXPO_PUBLIC_MITE_API_KEY,

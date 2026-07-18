@@ -3,7 +3,7 @@ import { ThemedView } from '@/components/ThemedView'
 import { IconSymbol } from '@/components/ui/IconSymbol'
 import type { IconSymbolName } from '@/components/ui/IconSymbol'
 import { useThemeColor } from '@/hooks/useThemeColor'
-import { StoreReviewPrompt, useMite } from '@mite/mite-sdk'
+import { StoreReviewPrompt, useMite } from '@usemite/mite-sdk'
 import { useState } from 'react'
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -95,13 +95,23 @@ export default function HomeScreen() {
           <FeatureCard
             icon="person.fill"
             title="User Identification"
-            description="Identify users to associate bug reports with accounts."
+            description="Identify users to associate reports and votes with accounts. Try it in the Profile tab."
           />
-          <FeatureCard
-            icon="wifi.slash"
-            title="Offline Queue"
-            description="Requests are queued when offline and sent when connectivity returns."
-          />
+          <Pressable
+            onPress={async () => {
+              await mite.flushOfflineQueue()
+              Alert.alert(
+                'Offline queue flushed',
+                `${mite.pendingRequestCount} request(s) still pending.`,
+              )
+            }}
+          >
+            <FeatureCard
+              icon="wifi.slash"
+              title="Offline Queue"
+              description="Requests are queued when offline and sent when connectivity returns. Tap to flush the queue."
+            />
+          </Pressable>
           <Pressable onPress={() => setReviewPromptVisible(true)}>
             <FeatureCard
               icon="star.fill"
