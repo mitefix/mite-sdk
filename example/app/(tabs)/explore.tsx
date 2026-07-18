@@ -2,7 +2,7 @@ import { ThemedText } from '@/components/ThemedText'
 import { ThemedView } from '@/components/ThemedView'
 import { InputWithLabel } from '@/components/ui/InputWithLabel'
 import { useThemeColor } from '@/hooks/useThemeColor'
-import { useBugReport } from '@usemite/mite-sdk'
+import { type SubmitBugReportPayload, useBugReport } from '@usemite/mite-sdk'
 import * as ImagePicker from 'expo-image-picker'
 import { useState } from 'react'
 import {
@@ -18,11 +18,9 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-interface Attachment {
-  uri: string
-  name?: string
-  type?: string
-}
+type Attachment = NonNullable<SubmitBugReportPayload['attachments']>[number]
+
+const MAX_ATTACHMENTS = 3
 
 export default function ReportScreen() {
   const insets = useSafeAreaInsets()
@@ -47,27 +45,31 @@ export default function ReportScreen() {
   }
 
   const pickScreenshots = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsMultipleSelection: true,
-      selectionLimit: 3,
-      quality: 0.8,
-    })
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsMultipleSelection: true,
+        selectionLimit: MAX_ATTACHMENTS - attachments.length,
+        quality: 0.8,
+      })
 
-    if (result.canceled) {
-      return
+      if (result.canceled) {
+        return
+      }
+
+      setAttachments(current => {
+        const fresh = result.assets
+          .filter(asset => !current.some(existing => existing.uri === asset.uri))
+          .map(asset => ({
+            uri: asset.uri,
+            name: asset.fileName ?? undefined,
+            type: asset.mimeType ?? 'image/jpeg',
+          }))
+        return [...current, ...fresh].slice(0, MAX_ATTACHMENTS)
+      })
+    } catch {
+      Alert.alert('Error', 'Could not open the photo library. Please try again.')
     }
-
-    setAttachments(current =>
-      [
-        ...current,
-        ...result.assets.map(asset => ({
-          uri: asset.uri,
-          name: asset.fileName ?? undefined,
-          type: asset.mimeType ?? 'image/jpeg',
-        })),
-      ].slice(0, 3),
-    )
   }
 
   const removeAttachment = (uri: string) => {
@@ -87,7 +89,7 @@ export default function ReportScreen() {
         steps_to_reproduce: stepsToReproduce.trim() || undefined,
         expected_behavior: expectedBehavior.trim() || undefined,
         actual_behavior: actualBehavior.trim() || undefined,
-        ...(attachments.length > 0 ? { attachments } : {}),
+        attachments: attachments.length > 0 ? attachments : undefined,
       })
       Alert.alert('Bug reported!', 'Your report has been submitted.', [
         {
@@ -213,7 +215,7 @@ export default function ReportScreen() {
                     </View>
                   </TouchableOpacity>
                 ))}
-                {attachments.length < 3 && (
+                {attachments.length < MAX_ATTACHMENTS && (
                   <TouchableOpacity
                     style={[styles.attachmentAdd, { borderColor: tintColor }]}
                     onPress={pickScreenshots}

@@ -39,24 +39,34 @@ export default function ProfileScreen() {
     setOptedOut(mite.isIdentificationOptedOut)
   }, [mite])
 
-  useFocusEffect(refreshIdentity)
+  useFocusEffect(
+    useCallback(() => {
+      let active = true
+      mite.whenIdentityReady().then(() => {
+        if (active) refreshIdentity()
+      })
+      return () => {
+        active = false
+      }
+    }, [mite, refreshIdentity]),
+  )
 
   const handleIdentify = async () => {
     setSubmitting(true)
     try {
-      const user_identifier =
+      const identifier =
         userId.trim() || email.trim() || `demo-user-${mite.anonymousId.slice(0, 8)}`
       await mite.identify({
-        user_identifier,
-        ...(email.trim() ? { email: email.trim() } : {}),
-        ...(name.trim() ? { name: name.trim() } : {}),
+        user_identifier: identifier,
+        email: email.trim() || undefined,
+        name: name.trim() || undefined,
         metadata: { source: 'example-app', fake_identity: true },
       })
       refreshIdentity()
       setName('')
       setEmail('')
       setUserId('')
-      Alert.alert('Identified', `Now reporting as ${user_identifier}.`)
+      Alert.alert('Identified', `Now reporting as ${identifier}.`)
     } catch {
       Alert.alert('Error', 'Failed to identify. Please try again.')
     } finally {

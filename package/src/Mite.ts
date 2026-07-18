@@ -171,8 +171,9 @@ export class Mite {
       })
     } catch (err) {
       if (this.offlineQueue && this.isNetworkError(err)) {
+        const { attachments, ...payloadWithoutAttachments } = payloadWithIdentity
         const queuedPayload: Record<string, unknown> = {
-          ...payloadWithIdentity,
+          ...payloadWithoutAttachments,
         }
 
         if (!this.identificationOptOut) {
@@ -184,6 +185,11 @@ export class Mite {
         this.offlineQueue.enqueue('post', '/api/v1/bug-reports', {
           ...queuedPayload,
         })
+        if (attachments && attachments.length > 0) {
+          console.warn(
+            '[Mite] Attachments cannot be uploaded while offline and were dropped from the queued bug report',
+          )
+        }
         console.log('[Mite] Bug report queued for retry')
       }
       throw err
@@ -219,8 +225,16 @@ export class Mite {
    */
   async logout(): Promise<void> {
     await this.ensureIdentityReady()
+    const previousUserIdentifier = this.currentUserIdentifier
     this.currentUserIdentifier = undefined
-    await this.persistIdentityState()
+
+    try {
+      await this.persistIdentityState()
+    } catch (err) {
+      this.currentUserIdentifier = previousUserIdentifier
+      throw err
+    }
+
     void this.syncIdentityState().catch(() => {
       // Ignore logout sync failures. Local state has already been updated.
     })
@@ -231,13 +245,22 @@ export class Mite {
    */
   async setIdentificationOptOut(optedOut: boolean): Promise<void> {
     await this.ensureIdentityReady()
+    const previousOptOut = this.identificationOptOut
+    const previousUserIdentifier = this.currentUserIdentifier
     this.identificationOptOut = optedOut
 
     if (optedOut) {
       this.currentUserIdentifier = undefined
     }
 
-    await this.persistIdentityState()
+    try {
+      await this.persistIdentityState()
+    } catch (err) {
+      this.identificationOptOut = previousOptOut
+      this.currentUserIdentifier = previousUserIdentifier
+      throw err
+    }
+
     void this.syncIdentityState().catch(() => {
       // Ignore preference sync failures. Local privacy state is already applied.
     })
@@ -439,6 +462,14 @@ export class Mite {
    */
   get userIdentifier(): string | undefined {
     return this.currentUserIdentifier
+  }
+
+  /**
+   * Resolves once persisted identity state has been restored from storage.
+   * Await this before reading identity getters on app startup.
+   */
+  async whenIdentityReady(): Promise<void> {
+    await this.identityReady
   }
 
   get isIdentificationOptedOut(): boolean {
