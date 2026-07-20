@@ -23,7 +23,7 @@ export class OfflineQueue {
   private flushTimer: ReturnType<typeof setInterval> | null = null
   private apiClient: ApiClient
   private maxRetries: number
-  private flushing = false
+  private flushPromise: Promise<void> | null = null
 
   constructor(apiClient: ApiClient, maxRetries = 5) {
     this.apiClient = apiClient
@@ -55,45 +55,49 @@ export class OfflineQueue {
    * Attempt to send all queued requests.
    */
   async flush(): Promise<void> {
-    if (this.flushing || this.queue.length === 0) return
-    this.flushing = true
+    if (this.flushPromise) return this.flushPromise
+    if (this.queue.length === 0) return
 
-    try {
-      const items = [...this.queue]
-      const completed: string[] = []
+    this.flushPromise = this.processQueue().finally(() => {
+      this.flushPromise = null
+    })
 
-      for (const item of items) {
-        // Drop stale requests
-        if (Date.now() - item.timestamp > MAX_AGE_MS) {
-          completed.push(item.id)
-          continue
-        }
+    return this.flushPromise
+  }
 
-        try {
-          if (item.method === 'post') {
-            await this.apiClient.post(item.url, item.data)
-          } else {
-            await this.apiClient.put(item.url, item.data)
-          }
-          completed.push(item.id)
-        } catch {
-          item.retries++
-          if (item.retries >= this.maxRetries) {
-            completed.push(item.id)
-            console.error(
-              `[Mite] Dropping queued request to ${item.url} after ${this.maxRetries} retries`,
-            )
-          }
-        }
+  private async processQueue(): Promise<void> {
+    const items = [...this.queue]
+    const completed: string[] = []
+
+    for (const item of items) {
+      // Drop stale requests
+      if (Date.now() - item.timestamp > MAX_AGE_MS) {
+        completed.push(item.id)
+        continue
       }
 
-      this.queue = this.queue.filter(q => !completed.includes(q.id))
-
-      if (this.queue.length === 0) {
-        this.stopFlushTimer()
+      try {
+        if (item.method === 'post') {
+          await this.apiClient.post(item.url, item.data)
+        } else {
+          await this.apiClient.put(item.url, item.data)
+        }
+        completed.push(item.id)
+      } catch {
+        item.retries++
+        if (item.retries >= this.maxRetries) {
+          completed.push(item.id)
+          console.error(
+            `[Mite] Dropping queued request to ${item.url} after ${this.maxRetries} retries`,
+          )
+        }
       }
-    } finally {
-      this.flushing = false
+    }
+
+    this.queue = this.queue.filter(q => !completed.includes(q.id))
+
+    if (this.queue.length === 0) {
+      this.stopFlushTimer()
     }
   }
 

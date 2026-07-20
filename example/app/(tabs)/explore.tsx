@@ -2,11 +2,13 @@ import { ThemedText } from '@/components/ThemedText'
 import { ThemedView } from '@/components/ThemedView'
 import { InputWithLabel } from '@/components/ui/InputWithLabel'
 import { useThemeColor } from '@/hooks/useThemeColor'
-import { useBugReport } from '@mite/mite-sdk'
+import { type SubmitBugReportPayload, useBugReport } from '@usemite/mite-sdk'
+import * as ImagePicker from 'expo-image-picker'
 import { useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -16,6 +18,10 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+type Attachment = NonNullable<SubmitBugReportPayload['attachments']>[number]
+
+const MAX_ATTACHMENTS = 3
+
 export default function ReportScreen() {
   const insets = useSafeAreaInsets()
   const { submitBug, submitting, lastResponse, reset } = useBugReport()
@@ -24,6 +30,51 @@ export default function ReportScreen() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [stepsToReproduce, setStepsToReproduce] = useState('')
+  const [expectedBehavior, setExpectedBehavior] = useState('')
+  const [actualBehavior, setActualBehavior] = useState('')
+  const [attachments, setAttachments] = useState<Attachment[]>([])
+
+  const clearForm = () => {
+    setTitle('')
+    setDescription('')
+    setStepsToReproduce('')
+    setExpectedBehavior('')
+    setActualBehavior('')
+    setAttachments([])
+    reset()
+  }
+
+  const pickScreenshots = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsMultipleSelection: true,
+        selectionLimit: MAX_ATTACHMENTS - attachments.length,
+        quality: 0.8,
+      })
+
+      if (result.canceled) {
+        return
+      }
+
+      setAttachments(current => {
+        const fresh = result.assets
+          .filter(asset => !current.some(existing => existing.uri === asset.uri))
+          .map(asset => ({
+            uri: asset.uri,
+            name: asset.fileName ?? undefined,
+            type: asset.mimeType ?? 'image/jpeg',
+          }))
+        return [...current, ...fresh].slice(0, MAX_ATTACHMENTS)
+      })
+    } catch {
+      Alert.alert('Error', 'Could not open the photo library. Please try again.')
+    }
+  }
+
+  const removeAttachment = (uri: string) => {
+    setAttachments(current => current.filter(attachment => attachment.uri !== uri))
+  }
 
   const handleSubmit = async () => {
     if (!title.trim() || !description.trim()) {
@@ -36,16 +87,14 @@ export default function ReportScreen() {
         title: title.trim(),
         description: description.trim(),
         steps_to_reproduce: stepsToReproduce.trim() || undefined,
+        expected_behavior: expectedBehavior.trim() || undefined,
+        actual_behavior: actualBehavior.trim() || undefined,
+        attachments: attachments.length > 0 ? attachments : undefined,
       })
       Alert.alert('Bug reported!', 'Your report has been submitted.', [
         {
           text: 'OK',
-          onPress: () => {
-            setTitle('')
-            setDescription('')
-            setStepsToReproduce('')
-            reset()
-          },
+          onPress: clearForm,
         },
       ])
     } catch {
@@ -66,12 +115,7 @@ export default function ReportScreen() {
           </ThemedText>
           <TouchableOpacity
             style={[styles.button, { backgroundColor: tintColor }]}
-            onPress={() => {
-              setTitle('')
-              setDescription('')
-              setStepsToReproduce('')
-              reset()
-            }}
+            onPress={clearForm}
           >
             <ThemedText style={styles.buttonText} lightColor="#fff" darkColor="#fff">
               Report Another
@@ -130,6 +174,67 @@ export default function ReportScreen() {
               style={styles.textArea}
             />
 
+            <InputWithLabel
+              label="Expected Behavior"
+              placeholder="What did you expect to happen?"
+              value={expectedBehavior}
+              onChangeText={setExpectedBehavior}
+              multiline
+              numberOfLines={2}
+            />
+
+            <InputWithLabel
+              label="Actual Behavior"
+              placeholder="What actually happened?"
+              value={actualBehavior}
+              onChangeText={setActualBehavior}
+              multiline
+              numberOfLines={2}
+            />
+
+            <View style={styles.attachmentsSection}>
+              <ThemedText style={styles.attachmentsLabel}>Screenshots</ThemedText>
+              <View style={styles.attachmentsRow}>
+                {attachments.map(attachment => (
+                  <TouchableOpacity
+                    key={attachment.uri}
+                    onPress={() => removeAttachment(attachment.uri)}
+                  >
+                    <Image
+                      source={{ uri: attachment.uri }}
+                      style={styles.attachmentThumb}
+                    />
+                    <View style={styles.attachmentRemoveBadge}>
+                      <ThemedText
+                        style={styles.attachmentRemoveText}
+                        lightColor="#fff"
+                        darkColor="#fff"
+                      >
+                        ×
+                      </ThemedText>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+                {attachments.length < MAX_ATTACHMENTS && (
+                  <TouchableOpacity
+                    style={[styles.attachmentAdd, { borderColor: tintColor }]}
+                    onPress={pickScreenshots}
+                  >
+                    <ThemedText style={[styles.attachmentAddText, { color: tintColor }]}>
+                      +
+                    </ThemedText>
+                  </TouchableOpacity>
+                )}
+              </View>
+              <ThemedText
+                style={styles.attachmentsHint}
+                lightColor="#999"
+                darkColor="#666"
+              >
+                Up to 3 images. Tap a thumbnail to remove it.
+              </ThemedText>
+            </View>
+
             <TouchableOpacity
               style={[
                 styles.button,
@@ -175,6 +280,56 @@ const styles = StyleSheet.create({
   textArea: {
     minHeight: 100,
     textAlignVertical: 'top',
+  },
+  attachmentsSection: {
+    marginBottom: 16,
+  },
+  attachmentsLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  attachmentsRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  attachmentThumb: {
+    width: 72,
+    height: 72,
+    borderRadius: 8,
+  },
+  attachmentRemoveBadge: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#ef4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  attachmentRemoveText: {
+    fontSize: 13,
+    lineHeight: 16,
+    fontWeight: '600',
+  },
+  attachmentAdd: {
+    width: 72,
+    height: 72,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  attachmentAddText: {
+    fontSize: 28,
+    lineHeight: 32,
+  },
+  attachmentsHint: {
+    fontSize: 13,
+    marginTop: 8,
   },
   button: {
     paddingVertical: 16,

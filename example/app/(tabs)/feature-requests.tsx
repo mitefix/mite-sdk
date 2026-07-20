@@ -6,7 +6,7 @@ import {
   type FeatureRequest,
   FeatureRequestsSheet,
   useFeatureRequests,
-} from '@mite/mite-sdk'
+} from '@usemite/mite-sdk'
 import { useMemo, useState } from 'react'
 import {
   ActivityIndicator,

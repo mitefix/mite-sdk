@@ -3,8 +3,9 @@ import { ThemedView } from '@/components/ThemedView'
 import { IconSymbol } from '@/components/ui/IconSymbol'
 import type { IconSymbolName } from '@/components/ui/IconSymbol'
 import { useThemeColor } from '@/hooks/useThemeColor'
-import { StoreReviewPrompt, useMite } from '@mite/mite-sdk'
-import { useState } from 'react'
+import { StoreReviewPrompt, useMite } from '@usemite/mite-sdk'
+import { useFocusEffect } from 'expo-router'
+import { useCallback, useState } from 'react'
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -38,6 +39,20 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets()
   const tintColor = useThemeColor({ light: '#0a7ea4', dark: '#4fc3f7' }, 'tint')
   const [reviewPromptVisible, setReviewPromptVisible] = useState(false)
+  const [pendingCount, setPendingCount] = useState(mite.pendingRequestCount)
+
+  useFocusEffect(
+    useCallback(() => {
+      setPendingCount(mite.pendingRequestCount)
+    }, [mite]),
+  )
+
+  const handleFlushQueue = async () => {
+    await mite.flushOfflineQueue()
+    const remaining = mite.pendingRequestCount
+    setPendingCount(remaining)
+    Alert.alert('Offline queue flushed', `${remaining} request(s) still pending.`)
+  }
 
   return (
     <ThemedView style={styles.container}>
@@ -64,7 +79,7 @@ export default function HomeScreen() {
           </ThemedText>
           <ThemedText style={styles.statusText} lightColor="#999" darkColor="#666">
             {' · '}
-            {mite.pendingRequestCount} pending
+            {pendingCount} pending
           </ThemedText>
         </View>
 
@@ -95,13 +110,15 @@ export default function HomeScreen() {
           <FeatureCard
             icon="person.fill"
             title="User Identification"
-            description="Identify users to associate bug reports with accounts."
+            description="Identify users to associate reports and votes with accounts. Try it in the Profile tab."
           />
-          <FeatureCard
-            icon="wifi.slash"
-            title="Offline Queue"
-            description="Requests are queued when offline and sent when connectivity returns."
-          />
+          <Pressable onPress={handleFlushQueue}>
+            <FeatureCard
+              icon="wifi.slash"
+              title="Offline Queue"
+              description="Requests are queued when offline and sent when connectivity returns. Tap to flush the queue."
+            />
+          </Pressable>
           <Pressable onPress={() => setReviewPromptVisible(true)}>
             <FeatureCard
               icon="star.fill"
