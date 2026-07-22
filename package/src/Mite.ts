@@ -571,16 +571,17 @@ export class Mite {
       reporter_name: _reporterName,
       reporter_email: _reporterEmail,
       device_info: _deviceInfo,
+      navigation_trail: providedTrail,
       ...rest
     } = payload
     const anonymous_id = providedAnonymousId ?? this.currentAnonymousId
-    const environment = this.buildEnvironmentWithNavigationTrail(rest.environment)
+    const trail = providedTrail ?? navigationTracker.getTrail()
 
     if (this.identificationOptOut) {
       return {
         ...rest,
         anonymous_id,
-        ...(environment ? { environment } : {}),
+        ...(trail.length > 0 ? { navigation_trail: trail } : {}),
       }
     }
 
@@ -589,26 +590,11 @@ export class Mite {
     return {
       ...rest,
       anonymous_id,
-      ...(environment ? { environment } : {}),
+      ...(trail.length > 0 ? { navigation_trail: trail } : {}),
       ...(user_identifier ? { user_identifier } : {}),
       ...(_reporterName ? { reporter_name: _reporterName } : {}),
       ...(_reporterEmail ? { reporter_email: _reporterEmail } : {}),
       ...(_deviceInfo ? { device_info: _deviceInfo } : {}),
-    }
-  }
-
-  private buildEnvironmentWithNavigationTrail(
-    environment?: Record<string, unknown>,
-  ): Record<string, unknown> | undefined {
-    const trail = navigationTracker.getTrail()
-
-    if (trail.length === 0) {
-      return environment
-    }
-
-    return {
-      ...environment,
-      navigation_trail: trail,
     }
   }
 

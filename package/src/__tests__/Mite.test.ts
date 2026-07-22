@@ -685,7 +685,7 @@ describe('Mite', () => {
       )
     })
 
-    it('attaches the navigation trail to the bug report environment', async () => {
+    it('attaches the navigation trail to the bug report payload', async () => {
       mockAxios.post.mockResolvedValueOnce({
         data: { id: 'bug-1', status: 'OPEN' },
       })
@@ -703,13 +703,11 @@ describe('Mite', () => {
       expect(mockAxios.post).toHaveBeenCalledWith(
         '/api/v1/bug-reports',
         expect.objectContaining({
-          environment: {
-            build_type: 'debug',
-            navigation_trail: [
-              expect.objectContaining({ screen: 'Home' }),
-              expect.objectContaining({ screen: 'Settings' }),
-            ],
-          },
+          environment: { build_type: 'debug' },
+          navigation_trail: [
+            expect.objectContaining({ screen: 'Home' }),
+            expect.objectContaining({ screen: 'Settings' }),
+          ],
         }),
         undefined,
       )
@@ -730,9 +728,7 @@ describe('Mite', () => {
       expect(mockAxios.post).toHaveBeenLastCalledWith(
         '/api/v1/bug-reports',
         expect.objectContaining({
-          environment: {
-            navigation_trail: [expect.objectContaining({ screen: 'Home' })],
-          },
+          navigation_trail: [expect.objectContaining({ screen: 'Home' })],
         }),
         undefined,
       )
@@ -752,7 +748,7 @@ describe('Mite', () => {
       const lastCall = mockAxios.post.mock.calls.at(-1)?.[1]
       expect(lastCall).toEqual(
         expect.not.objectContaining({
-          environment: expect.anything(),
+          navigation_trail: expect.anything(),
         }),
       )
     })
@@ -776,7 +772,7 @@ describe('Mite', () => {
       const lastCall = mockAxios.post.mock.calls.at(-1)?.[1]
       expect(lastCall).toEqual(
         expect.not.objectContaining({
-          environment: expect.anything(),
+          navigation_trail: expect.anything(),
         }),
       )
     })
@@ -802,12 +798,10 @@ describe('Mite', () => {
       expect(mockAxios.post).toHaveBeenCalledWith(
         '/api/v1/bug-reports',
         expect.objectContaining({
-          environment: {
-            navigation_trail: [
-              expect.objectContaining({ screen: 'Settings' }),
-              expect.objectContaining({ screen: 'Profile' }),
-            ],
-          },
+          navigation_trail: [
+            expect.objectContaining({ screen: 'Settings' }),
+            expect.objectContaining({ screen: 'Profile' }),
+          ],
         }),
         undefined,
       )
