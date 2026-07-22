@@ -19,7 +19,7 @@ export interface SubmitFeatureRequestInput {
   title: string
   description?: string
   author_name?: string
-  author_email?: string
+  author_email: string
 }
 
 export interface UseFeatureRequestsResult {
