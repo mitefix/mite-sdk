@@ -160,6 +160,7 @@ export interface SubmitBugReportPayload {
   app_version?: string
   device_info?: Record<string, unknown>
   environment?: Record<string, unknown>
+  navigation_trail?: NavigationBreadcrumb[]
   attachments?: Array<{ uri: string; type?: string; name?: string }>
 }
 
