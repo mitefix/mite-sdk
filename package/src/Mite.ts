@@ -574,6 +574,9 @@ export class Mite {
       navigation_trail: providedTrail,
       ...rest
     } = payload
+    for (const field of ['priority', 'status', 'assigned_to', 'assignee']) {
+      delete (rest as Record<string, unknown>)[field]
+    }
     const anonymous_id = providedAnonymousId ?? this.currentAnonymousId
     const trail = providedTrail ?? navigationTracker.getTrail()
 

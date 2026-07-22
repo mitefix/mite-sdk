@@ -156,7 +156,6 @@ export interface SubmitBugReportPayload {
   steps_to_reproduce?: string
   expected_behavior?: string
   actual_behavior?: string
-  priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
   app_version?: string
   device_info?: Record<string, unknown>
   environment?: Record<string, unknown>
@@ -166,7 +165,7 @@ export interface SubmitBugReportPayload {
 
 export interface SubmitBugReportResponse {
   id: string
-  status: 'OPEN'
+  status: 'NEEDS_TRIAGE'
 }
 
 export interface IdentifyUserPayload {
