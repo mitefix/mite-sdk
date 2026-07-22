@@ -134,6 +134,7 @@ export default function FeatureRequestsScreen() {
   const errorBg = useThemeColor({ light: '#FFEBEE', dark: '#3b1a1a' }, 'background')
 
   const [authorName, setAuthorName] = useState('')
+  const [authorEmail, setAuthorEmail] = useState('')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
 
@@ -155,8 +156,8 @@ export default function FeatureRequestsScreen() {
   )
 
   const handleCreate = async () => {
-    if (!title.trim()) {
-      Alert.alert('Missing fields', 'Title is required.')
+    if (!title.trim() || !authorEmail.trim()) {
+      Alert.alert('Missing fields', 'Title and email are required.')
       return
     }
 
@@ -164,6 +165,7 @@ export default function FeatureRequestsScreen() {
       await submitFeatureRequest({
         title,
         description,
+        author_email: authorEmail,
         ...(authorName.trim() ? { author_name: authorName } : {}),
       })
       setTitle('')
@@ -236,6 +238,13 @@ export default function FeatureRequestsScreen() {
               placeholder="Taylor"
               value={authorName}
               onChangeText={setAuthorName}
+            />
+            <InputWithLabel
+              label="Email"
+              required
+              placeholder="you@example.com"
+              value={authorEmail}
+              onChangeText={setAuthorEmail}
             />
             <InputWithLabel
               label="Title"
