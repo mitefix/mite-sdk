@@ -807,6 +807,34 @@ describe('Mite', () => {
       )
     })
 
+    it('strips triage fields from the bug report payload', async () => {
+      mockAxios.post.mockResolvedValueOnce({
+        data: { id: 'bug-1', status: 'NEEDS_TRIAGE' },
+      })
+
+      const mite = new Mite({ apiKey: 'test' })
+      await mite.submitBug({
+        title: 'Test Bug',
+        description: 'A test bug report',
+        priority: 'CRITICAL',
+        status: 'RESOLVED',
+        assigned_to: 'user_1',
+        assignee: 'user_1',
+      } as never)
+
+      const lastCall = mockAxios.post.mock.calls.at(-1)?.[1]
+      expect(lastCall).toEqual(
+        expect.not.objectContaining({ priority: expect.anything() }),
+      )
+      expect(lastCall).toEqual(expect.not.objectContaining({ status: expect.anything() }))
+      expect(lastCall).toEqual(
+        expect.not.objectContaining({ assigned_to: expect.anything() }),
+      )
+      expect(lastCall).toEqual(
+        expect.not.objectContaining({ assignee: expect.anything() }),
+      )
+    })
+
     it('normalizes custom device_info values to flat string values for bug reports', async () => {
       mockAxios.post.mockResolvedValueOnce({
         data: { id: 'bug-1', status: 'OPEN' },
