@@ -339,6 +339,7 @@ describe('Mite', () => {
       const result = await mite.createFeatureRequest({
         title: ' Offline mode ',
         description: ' Cache updates locally ',
+        author_email: 'user@example.com',
       })
 
       expect(result).toEqual({ id: 'fr_1', status: 'OPEN' })
@@ -347,13 +348,14 @@ describe('Mite', () => {
         {
           title: 'Offline mode',
           description: 'Cache updates locally',
+          author_email: 'user@example.com',
           anonymous_id: mite.anonymousId,
         },
         undefined,
       )
     })
 
-    it('creates feature requests with normalized optional author fields', async () => {
+    it('creates feature requests with a normalized email and optional name', async () => {
       mockAxios.post.mockResolvedValueOnce({
         data: { id: 'fr_1', status: 'OPEN' },
       })
@@ -370,9 +372,9 @@ describe('Mite', () => {
         {
           title: 'Offline mode',
           description: '',
+          author_email: 'user@example.com',
           anonymous_id: mite.anonymousId,
           author_name: 'Test User',
-          author_email: 'user@example.com',
         },
         undefined,
       )
@@ -385,13 +387,17 @@ describe('Mite', () => {
 
       const mite = new Mite({ apiKey: 'test' })
       await mite.identify({ user_identifier: 'user1' })
-      await mite.createFeatureRequest({ title: 'Offline mode' })
+      await mite.createFeatureRequest({
+        title: 'Offline mode',
+        author_email: 'user@example.com',
+      })
 
       expect(mockAxios.post).toHaveBeenLastCalledWith(
         '/api/v1/feature-requests',
         {
           title: 'Offline mode',
           description: '',
+          author_email: 'user@example.com',
           anonymous_id: mite.anonymousId,
           user_identifier: 'user1',
         },
@@ -399,7 +405,7 @@ describe('Mite', () => {
       )
     })
 
-    it('omits identified author fields when opted out', async () => {
+    it('omits the user identifier but keeps author fields when opted out', async () => {
       mockAxios.post.mockResolvedValue({ data: { id: 'fr_1', status: 'OPEN' } })
 
       const mite = new Mite({ apiKey: 'test' })
@@ -416,7 +422,9 @@ describe('Mite', () => {
         {
           title: 'Offline mode',
           description: '',
+          author_email: 'user@example.com',
           anonymous_id: mite.anonymousId,
+          author_name: 'Test User',
         },
         undefined,
       )

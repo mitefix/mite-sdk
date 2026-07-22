@@ -157,7 +157,11 @@ interface ComposeFormProps {
   accentColor: string
   submitting: boolean
   submitError: Error | null
-  onSubmit: (input: { title: string; description?: string }) => void
+  onSubmit: (input: {
+    title: string
+    description?: string
+    author_email: string
+  }) => void
   onCancel: () => void
 }
 
@@ -170,7 +174,8 @@ function ComposeForm({
 }: ComposeFormProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const canSubmit = title.trim().length > 0 && !submitting
+  const [email, setEmail] = useState('')
+  const canSubmit = title.trim().length > 0 && email.trim().includes('@') && !submitting
 
   return (
     <View style={styles.form}>
@@ -194,6 +199,18 @@ function ComposeForm({
         multiline
         numberOfLines={4}
       />
+      <Text style={styles.formLabel}>Email</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="you@example.com"
+        placeholderTextColor="#8e8e93"
+        value={email}
+        onChangeText={setEmail}
+        editable={!submitting}
+        autoCapitalize="none"
+        autoComplete="email"
+        keyboardType="email-address"
+      />
       {submitError ? (
         <Text style={styles.errorText}>
           Could not submit your request. Please try again.
@@ -211,6 +228,7 @@ function ComposeForm({
           onSubmit({
             title,
             ...(description.trim() ? { description } : {}),
+            author_email: email,
           })
         }
       >
@@ -234,8 +252,8 @@ function ComposeForm({
 
 /**
  * In-app sheet where end users can browse existing feature requests, vote on
- * them, and submit new ones. Submissions and votes are tied to the SDK's
- * identified/anonymous end user, so no email is required.
+ * them, and submit new ones. Votes are tied to the SDK's identified/anonymous
+ * end user; submissions require an email so the team can follow up.
  *
  * Wrap any element to use it as the trigger:
  *
@@ -281,7 +299,11 @@ export function FeatureRequestsSheet({
   )
 
   const handleSubmit = useCallback(
-    (input: { title: string; description?: string }) => {
+    (input: {
+      title: string
+      description?: string
+      author_email: string
+    }) => {
       submitFeatureRequest(input)
         .then(response => {
           setComposing(false)

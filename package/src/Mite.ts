@@ -318,19 +318,18 @@ export class Mite {
     const body: Record<string, unknown> = {
       title: payload.title.trim(),
       description: payload.description?.trim() ?? '',
+      author_email: payload.author_email.trim().toLowerCase(),
       anonymous_id: payload.anonymous_id ?? this.currentAnonymousId,
+    }
+
+    if (payload.author_name?.trim()) {
+      body.author_name = payload.author_name.trim()
     }
 
     if (!this.identificationOptOut) {
       const user_identifier = payload.user_identifier ?? this.currentUserIdentifier
       if (user_identifier) {
         body.user_identifier = user_identifier
-      }
-      if (payload.author_name?.trim()) {
-        body.author_name = payload.author_name.trim()
-      }
-      if (payload.author_email?.trim()) {
-        body.author_email = payload.author_email.trim().toLowerCase()
       }
     }
 

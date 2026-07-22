@@ -93,14 +93,14 @@ export interface CreateFeatureRequestPayload {
   description?: string
   /**
    * Optional display name shown next to the request. When omitted, the
-   * request is attributed to the SDK's identified/anonymous end user.
+   * request is displayed as anonymous.
    */
   author_name?: string
   /**
-   * Optional contact email. The request is always tied to the SDK's
-   * identified/anonymous end user, so this is no longer required.
+   * Contact email for the request. Required so the team can follow up
+   * and notify the author of status changes.
    */
-  author_email?: string
+  author_email: string
   /**
    * Override the anonymous identifier. Defaults to the SDK's current
    * anonymous id.
