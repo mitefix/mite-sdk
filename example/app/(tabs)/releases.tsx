@@ -1,7 +1,7 @@
 import { ThemedText } from '@/components/ThemedText'
 import { ThemedView } from '@/components/ThemedView'
 import { useThemeColor } from '@/hooks/useThemeColor'
-import { type Release, WhatsNew, showWhatsNew, useReleases } from '@usemite/mite-sdk'
+import { type Release, WhatsNew, showWhatsNew, useReleases } from '@usemite/sdk'
 import {
   ActivityIndicator,
   ScrollView,

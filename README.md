@@ -5,11 +5,11 @@ A React Native SDK for managing releases, bug reports, and feature requests.
 ## Installation
 
 ```bash
-npm install @mite/mite-sdk
+npm install @usemite/sdk
 # or
-yarn add @mite/mite-sdk
+yarn add @usemite/sdk
 # or
-bun add @mite/mite-sdk
+bun add @usemite/sdk
 ```
 
 ## Setup
@@ -21,7 +21,7 @@ Create a Mite instance and initialize it in your app's entry point:
 ```typescript
 import AsyncStorage from '@react-native-async-storage/async-storage'
 // or: import { MMKV } from 'react-native-mmkv'
-import { Mite, MiteProvider } from '@mite/mite-sdk'
+import { Mite, MiteProvider } from '@usemite/sdk'
 
 const mite = new Mite({
   apiKey: process.env.EXPO_PUBLIC_MITE_API_KEY,
@@ -84,7 +84,7 @@ Mite can capture a trail of the screens visited before a bug report is submitted
 
 ```tsx
 import { useNavigationContainerRef } from 'expo-router'
-import { useMiteNavigationTracking } from '@mite/mite-sdk'
+import { useMiteNavigationTracking } from '@usemite/sdk'
 
 export default function RootLayout() {
   useMiteNavigationTracking(useNavigationContainerRef())
@@ -96,7 +96,7 @@ export default function RootLayout() {
 
 ```tsx
 import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native'
-import { useMiteNavigationTracking } from '@mite/mite-sdk'
+import { useMiteNavigationTracking } from '@usemite/sdk'
 
 function App() {
   const navigationRef = useNavigationContainerRef()
@@ -109,7 +109,7 @@ function App() {
 If you use a custom navigation solution, record screens manually:
 
 ```typescript
-import { recordNavigationBreadcrumb, clearNavigationTrail } from '@mite/mite-sdk'
+import { recordNavigationBreadcrumb, clearNavigationTrail } from '@usemite/sdk'
 
 recordNavigationBreadcrumb('Settings')
 clearNavigationTrail() // e.g. on logout
@@ -124,7 +124,7 @@ Disable the feature or change the buffer size with `enableNavigationBreadcrumbs`
 Fetch app releases with the `useReleases` hook:
 
 ```typescript
-import { useReleases } from '@mite/mite-sdk'
+import { useReleases } from '@usemite/sdk'
 
 export default function ReleasesScreen() {
   const { releases, loading, error, refetch } = useReleases({
@@ -158,7 +158,7 @@ export default function ReleasesScreen() {
 You can also fetch releases directly using the Mite instance:
 
 ```typescript
-import { useMite } from '@mite/mite-sdk'
+import { useMite } from '@usemite/sdk'
 
 const mite = useMite()
 
@@ -173,7 +173,7 @@ const releases = await mite.getReleases({
 Show published release notes in-app after an update. The widget tracks the last seen version locally and shows once per new app version. Release notes support a simple markdown subset (headings, bullet lists, bold, italic, inline code).
 
 ```tsx
-import { WhatsNew, showWhatsNew } from '@mite/mite-sdk'
+import { WhatsNew, showWhatsNew } from '@usemite/sdk'
 
 export default function RootLayout() {
   return (
@@ -193,7 +193,7 @@ The current app version is detected via `expo-application` (falling back to `exp
 For a custom UI, use the `useWhatsNew` hook directly:
 
 ```tsx
-import { useWhatsNew } from '@mite/mite-sdk'
+import { useWhatsNew } from '@usemite/sdk'
 
 const { visible, releases, show, dismiss } = useWhatsNew({ platform: 'ios' })
 ```
@@ -231,7 +231,7 @@ const votedIds = await mite.getFeatureRequestVotes('taylor@example.com')
 Or use the `useFeatureRequests` hook to fetch the board and vote state together:
 
 ```typescript
-import { useFeatureRequests } from '@mite/mite-sdk'
+import { useFeatureRequests } from '@usemite/sdk'
 
 const { featureRequests, votedFeatureRequestIds, loading, refetch } =
   useFeatureRequests({
@@ -257,7 +257,7 @@ If `expo-store-review` is not installed, the SDK logs a `[Mite]` warning and
 skips the store review request instead of crashing.
 
 ```typescript
-import { StoreReviewPrompt } from '@mite/mite-sdk'
+import { StoreReviewPrompt } from '@usemite/sdk'
 
 export default function App() {
   const [visible, setVisible] = useState(false)

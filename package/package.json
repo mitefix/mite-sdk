@@ -1,5 +1,5 @@
 {
-  "name": "@usemite/mite-sdk",
+  "name": "@usemite/sdk",
   "version": "0.1.2",
   "description": "Mite SDK",
   "main": "./lib/module/index.js",

@@ -2,7 +2,7 @@ import { ThemedText } from '@/components/ThemedText'
 import { ThemedView } from '@/components/ThemedView'
 import { InputWithLabel } from '@/components/ui/InputWithLabel'
 import { useThemeColor } from '@/hooks/useThemeColor'
-import { type SubmitBugReportPayload, useBugReport } from '@usemite/mite-sdk'
+import { type SubmitBugReportPayload, useBugReport } from '@usemite/sdk'
 import * as ImagePicker from 'expo-image-picker'
 import { useState } from 'react'
 import {
