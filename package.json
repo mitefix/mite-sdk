@@ -5,7 +5,8 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "typescript": "bun --filter=\"**\" typescript",
-    "clean": "rm -rf package/tsconfig.tsbuildinfo package/node_modules package/lib"
+    "clean": "rm -rf package/tsconfig.tsbuildinfo package/node_modules package/lib",
+    "release": "bun --cwd package release"
   },
   "workspaces": [
     "example",
