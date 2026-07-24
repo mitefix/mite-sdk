@@ -2,7 +2,7 @@ import { ThemedText } from '@/components/ThemedText'
 import { ThemedView } from '@/components/ThemedView'
 import { InputWithLabel } from '@/components/ui/InputWithLabel'
 import { useThemeColor } from '@/hooks/useThemeColor'
-import { useMite } from '@usemite/mite-sdk'
+import { useMite } from '@usemite/sdk'
 import { useFocusEffect } from 'expo-router'
 import { useCallback, useState } from 'react'
 import {

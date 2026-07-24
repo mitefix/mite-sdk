@@ -10,7 +10,7 @@ import {
   MiteProvider,
   ShakeToReport,
   useMiteNavigationTracking,
-} from '@usemite/mite-sdk'
+} from '@usemite/sdk'
 
 const mite = new Mite({
   apiKey: process.env.EXPO_PUBLIC_MITE_API_KEY,

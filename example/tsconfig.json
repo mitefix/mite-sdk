@@ -6,8 +6,8 @@
     "types": ["jest"],
     "paths": {
       "@/*": ["./*"],
-      "@usemite/mite-sdk": ["../package/src/index"],
-      "@usemite/mite-sdk/*": ["../package/src/*"]
+      "@usemite/sdk": ["../package/src/index"],
+      "@usemite/sdk/*": ["../package/src/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
