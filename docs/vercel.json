@@ -1,0 +1,3 @@
+{
+  "installCommand": "bun install --filter mite-sdk-docs"
+}
