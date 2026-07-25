@@ -36,7 +36,7 @@
         "expo-build-properties",
         {
           "ios": {
-            "deploymentTarget": "16.0"
+            "deploymentTarget": "16.4"
           }
         }
       ],
@@ -46,7 +46,8 @@
           "photosPermission": "The app accesses your photos."
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-splash-screen"
     ],
     "experiments": {
       "typedRoutes": true

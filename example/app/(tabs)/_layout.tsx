@@ -1,9 +1,5 @@
-import { Tabs } from 'expo-router'
-import { Platform } from 'react-native'
+import { NativeTabs } from 'expo-router/unstable-native-tabs'
 
-import { HapticTab } from '@/components/HapticTab'
-import { IconSymbol } from '@/components/ui/IconSymbol'
-import TabBarBackground from '@/components/ui/TabBarBackground'
 import { Colors } from '@/constants/Colors'
 import { useColorScheme } from '@/hooks/useColorScheme'
 
@@ -11,66 +7,27 @@ export default function TabLayout() {
   const colorScheme = useColorScheme()
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
-          },
-          default: {},
-        }),
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Report',
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="ant.fill" color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="releases"
-        options={{
-          title: 'Releases',
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="shippingbox.fill" color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="feature-requests"
-        options={{
-          title: 'Requests',
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="lightbulb.fill" color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="person.fill" color={color} />
-          ),
-        }}
-      />
-    </Tabs>
+    <NativeTabs tintColor={Colors[colorScheme ?? 'light'].tint}>
+      <NativeTabs.Trigger name="index">
+        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="house.fill" md="home" />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="explore">
+        <NativeTabs.Trigger.Label>Report</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="ant.fill" md="bug_report" />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="releases">
+        <NativeTabs.Trigger.Label>Releases</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="shippingbox.fill" md="inventory_2" />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="feature-requests">
+        <NativeTabs.Trigger.Label>Requests</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="lightbulb.fill" md="lightbulb" />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="profile">
+        <NativeTabs.Trigger.Label>Profile</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="person.fill" md="person" />
+      </NativeTabs.Trigger>
+    </NativeTabs>
   )
 }
