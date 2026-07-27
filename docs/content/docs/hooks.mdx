@@ -3,84 +3,170 @@ title: Hooks Reference
 description: Complete reference for all React hooks provided by the Mite SDK.
 ---
 
+Every hook must be called inside a [`MiteProvider`](/#1-initialize-mite).
+
+| Hook | Purpose |
+| --- | --- |
+| [`useMite`](#usemite) | Access the Mite instance |
+| [`useBugReport`](#usebugreport) | Submit bug reports |
+| [`useReleases`](#usereleases) | Fetch published releases |
+| [`useWhatsNew`](#usewhatsnew) | Once-per-version release notes |
+| [`useFeatureRequests`](#usefeaturerequests) | Board, voting, and submissions |
+| [`useMiteNavigationTracking`](#usemitenavigationtracking) | Record screens for bug reports |
+
+<Callout type="warn">
+  `enabled` is **not** consistent across hooks. It defaults to `false` on
+  `useReleases` and `useFeatureRequests` (opt in to fetching) but `true` on
+  `useWhatsNew` (opt out of the automatic behavior).
+</Callout>
+
 ## useMite
 
-Access the Mite instance from any component within `MiteProvider`:
+Access the Mite instance from any component within `MiteProvider`.
 
 ```ts
-import { useMite } from '@usemite/mite-sdk'
+import { useMite } from '@usemite/sdk'
 
 const mite = useMite()
 ```
 
-## useReleases
-
-Fetch app releases with loading state management.
-
-```ts
-import { useReleases } from '@usemite/mite-sdk'
-
-const { releases, loading, error, refetch } = useReleases(options?)
-```
-
-### Options
-
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `platform` | `'ios' \| 'android' \| 'all'` | `'all'` | Filter by platform |
-| `limit` | `number` | — | Max number of releases |
-| `enabled` | `boolean` | `true` | Enable/disable fetching |
-
-### Return Value
-
-| Field | Type | Description |
-| --- | --- | --- |
-| `releases` | `Release[]` | Array of releases |
-| `loading` | `boolean` | Whether data is being fetched |
-| `error` | `Error \| null` | Error if fetch failed |
-| `refetch` | `() => void` | Manually trigger a refetch |
-
-## useFeatureRequests
-
-Fetch the feature request board with vote state.
-
-```ts
-import { useFeatureRequests } from '@usemite/mite-sdk'
-
-const { featureRequests, votedFeatureRequestIds, loading, refetch } =
-  useFeatureRequests(options?)
-```
-
-### Options
-
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `enabled` | `boolean` | `true` | Enable/disable fetching |
-| `voterEmail` | `string` | — | Email to check votes for |
-
-### Return Value
-
-| Field | Type | Description |
-| --- | --- | --- |
-| `featureRequests` | `FeatureRequest[]` | Array of feature requests |
-| `votedFeatureRequestIds` | `string[]` | IDs the voter has voted for |
-| `loading` | `boolean` | Whether data is being fetched |
-| `refetch` | `() => void` | Manually trigger a refetch |
+Throws `useMite must be used within a MiteProvider` when called outside the
+provider.
 
 ## useBugReport
 
-Submit bug reports.
+Submit bug reports with submission state. See [Bug Reports](/bug-reports).
 
 ```ts
-import { useBugReport } from '@usemite/mite-sdk'
-
-const { submitBugReport, loading, error } = useBugReport()
+const { submitBug, submitting, error, lastResponse, reset } = useBugReport()
 ```
 
-### Return Value
+### Return value
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `submitBugReport` | `(payload: BugReportPayload) => Promise<void>` | Submit a bug report |
-| `loading` | `boolean` | Whether submission is in progress |
-| `error` | `Error \| null` | Error if submission failed |
+| `submitBug` | `(payload: BugReportPayload) => Promise<SubmitBugReportResponse>` | Submit a report. Rejects on failure |
+| `submitting` | `boolean` | Whether a submission is in flight |
+| `error` | `Error \| null` | Last submission error |
+| `lastResponse` | `SubmitBugReportResponse \| null` | Last successful response |
+| `reset` | `() => void` | Clear `error` and `lastResponse` |
+
+## useReleases
+
+Fetch published releases. See [Releases](/releases).
+
+```ts
+const { releases, loading, error, refetch } = useReleases({ enabled: true })
+```
+
+### Options
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `platform` | `'ios' \| 'android' \| 'all'` | unset | Filter by platform |
+| `limit` | `number` | unset | Max number of releases |
+| `enabled` | `boolean` | `false` | Fetch on mount and when options change |
+
+### Return value
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `releases` | `Release[]` | Fetched releases |
+| `loading` | `boolean` | Whether a fetch is in flight |
+| `error` | `Error \| null` | Fetch error |
+| `refetch` | `() => Promise<void>` | Fetch again. Never rejects |
+
+## useWhatsNew
+
+Drive a custom "What's New" UI. See [What's New](/whats-new).
+
+```ts
+const { visible, releases, currentVersion, loading, error, show, dismiss } =
+  useWhatsNew({ platform: 'ios' })
+```
+
+### Options
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `currentVersion` | `string` | auto-detected | Override the installed app version |
+| `platform` | `'ios' \| 'android' \| 'all'` | current `Platform.OS` | Release platform |
+| `showOnFirstLaunch` | `boolean` | `false` | Show on a fresh install |
+| `limit` | `number` | `20` | Max releases fetched while matching |
+| `enabled` | `boolean` | `true` | Enable automatic once-per-version behavior |
+
+### Return value
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `visible` | `boolean` | Whether notes should show now |
+| `releases` | `Release[]` | Releases to display |
+| `currentVersion` | `string \| null` | Detected version |
+| `loading` | `boolean` | Whether releases are being fetched |
+| `error` | `Error \| null` | Fetch error |
+| `show` | `() => void` | Show regardless of last-seen version |
+| `dismiss` | `() => Promise<void>` | Hide and mark the version seen |
+
+## useFeatureRequests
+
+Board, voting, and submissions. See [Feature Requests](/feature-requests).
+
+```ts
+const {
+  featureRequests,
+  votedFeatureRequestIds,
+  loading,
+  error,
+  refetch,
+  submitFeatureRequest,
+  submitting,
+  submitError,
+  toggleVote,
+  votingFeatureRequestIds,
+} = useFeatureRequests({ enabled: true })
+```
+
+### Options
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `enabled` | `boolean` | `false` | Fetch board and vote state on mount |
+| `voterEmail` | `string` | — | **Deprecated.** Look up votes by email |
+
+### Return value
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `featureRequests` | `FeatureRequest[]` | The board |
+| `votedFeatureRequestIds` | `string[]` | IDs the user voted for |
+| `loading` | `boolean` | Whether the board is loading |
+| `error` | `Error \| null` | Fetch error |
+| `refetch` | `() => Promise<void>` | Refetch. Never rejects |
+| `submitFeatureRequest` | `(input: SubmitFeatureRequestInput) => Promise<CreateFeatureRequestResponse>` | Create, then refetch |
+| `submitting` | `boolean` | Submission in flight |
+| `submitError` | `Error \| null` | Submission error |
+| `toggleVote` | `(id: string) => Promise<VoteFeatureRequestResponse>` | Toggle a vote, optimistically |
+| `votingFeatureRequestIds` | `string[]` | IDs with a vote in flight |
+
+## useMiteNavigationTracking
+
+Record screen changes for the [navigation trail](/navigation-breadcrumbs).
+
+```ts
+useMiteNavigationTracking(navigationRef)
+```
+
+Accepts a navigation container ref from Expo Router or React Navigation, or
+`null`/`undefined`. Returns nothing. Logs a `[Mite]` warning and disables
+breadcrumbs when the ref does not expose `getCurrentRoute` and `addListener`.
+
+## Non-hook helpers
+
+These are plain functions, usable outside React:
+
+| Function | Description |
+| --- | --- |
+| `recordNavigationBreadcrumb(screen)` | Record a screen manually |
+| `getNavigationTrail()` | Get a copy of the trail, oldest first |
+| `clearNavigationTrail()` | Clear all breadcrumbs |
+| `showWhatsNew()` | Open a mounted [`WhatsNew`](/whats-new) sheet |

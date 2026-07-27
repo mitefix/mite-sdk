@@ -6,10 +6,17 @@
     "identity",
     "---Features---",
     "bug-reports",
+    "shake-to-report",
     "releases",
+    "whats-new",
     "feature-requests",
+    "store-review",
+    "navigation-breadcrumbs",
+    "offline-queue",
     "---Reference---",
+    "mite-instance",
     "hooks",
+    "components",
     "types"
   ]
 }
