@@ -2,12 +2,14 @@
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
 
-@import '@fontsource-variable/geist';
-@import '@fontsource-variable/geist-mono';
+@import '@fontsource-variable/ibm-plex-sans';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import '@fontsource/ibm-plex-mono/600.css';
 
 @theme inline {
-  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'Geist Mono Variable', ui-monospace, monospace;
+  --font-sans: 'IBM Plex Sans Variable', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
 
   --color-mite-50: #fdf5ee;
   --color-mite-100: #fbeadb;
@@ -22,9 +24,21 @@
   --color-mite-950: #2a1708;
 }
 
+@theme {
+  --radius-xs: 0rem;
+  --radius-sm: 0rem;
+  --radius-md: 0rem;
+  --radius-lg: 0rem;
+  --radius-xl: 0rem;
+  --radius-2xl: 0rem;
+  --radius-3xl: 0rem;
+  --radius-4xl: 0rem;
+}
+
 :root {
   --color-fd-primary: oklch(0.637 0.237 39);
   --color-fd-primary-foreground: oklch(0.98 0.016 73.684);
+  --color-fd-primary-strong: oklch(0.58 0.22 39);
   --color-fd-background: oklch(1 0 0);
   --color-fd-foreground: oklch(0.141 0.005 285.823);
   --color-fd-muted: oklch(0.967 0.001 286.375);
@@ -38,12 +52,13 @@
   --color-fd-card: oklch(1 0 0);
   --color-fd-card-foreground: oklch(0.141 0.005 285.823);
   --color-fd-border: oklch(0.92 0.004 286.32);
-  --color-fd-ring: oklch(0.637 0.237 39);
+  --color-fd-ring: oklch(0.705 0.015 286.067);
 }
 
 .dark {
-  --color-fd-primary: oklch(0.58 0.22 39);
+  --color-fd-primary: oklch(0.62 0.23 40);
   --color-fd-primary-foreground: oklch(0.98 0.016 73.684);
+  --color-fd-primary-strong: oklch(0.7 0.24 43);
   --color-fd-background: oklch(0.141 0.005 285.823);
   --color-fd-foreground: oklch(0.985 0 0);
   --color-fd-muted: oklch(0.274 0.006 286.033);
@@ -57,10 +72,29 @@
   --color-fd-card: oklch(0.21 0.006 285.885);
   --color-fd-card-foreground: oklch(0.985 0 0);
   --color-fd-border: oklch(1 0 0 / 10%);
-  --color-fd-ring: oklch(0.58 0.22 39);
+  --color-fd-ring: oklch(0.552 0.016 285.938);
 }
 
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: var(--font-mono);
+}
+
+::selection {
+  background: var(--color-fd-primary);
+  color: #fff;
+}
+
+#nd-sidebar a[data-active='true'] {
+  background-color: transparent;
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--color-fd-primary);
+}
+
+#nd-sidebar a[data-active='true']::before {
+  display: none;
 }
