@@ -25,14 +25,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mitefix/mite-sdk.git"
+    "url": "git+https://github.com/usemite/mite-sdk.git"
   },
   "author": "Henry Paulino <me@henrypl.com> (https://github.com/corasan)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/mitefix/mite-sdk/issues"
+    "url": "https://github.com/usemite/mite-sdk/issues"
   },
-  "homepage": "https://github.com/mitefix/mite-sdk#readme",
+  "homepage": "https://docs.usemite.com",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"

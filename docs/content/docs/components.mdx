@@ -1,0 +1,135 @@
+---
+title: Components Reference
+description: All React Native components exported by the Mite SDK.
+---
+
+Every component must be rendered inside a
+[`MiteProvider`](/#1-initialize-mite). All of them ship with sensible default
+styling and need no configuration to work.
+
+| Component | Purpose |
+| --- | --- |
+| [`MiteProvider`](#miteprovider) | Provide the Mite instance to the tree |
+| [`ShakeToReport`](#shaketoreport) | Full in-app bug reporting flow |
+| [`ScreenshotAnnotator`](#screenshotannotator) | Draw on and redact an image |
+| [`WhatsNew`](#whatsnew) | Release notes after an update |
+| [`FeatureRequestsSheet`](#featurerequestssheet) | Feature request board |
+| [`StoreReviewPrompt`](#storereviewprompt) | Review deflection prompt |
+
+## MiteProvider
+
+Makes a Mite instance available to hooks and components.
+
+```tsx
+<MiteProvider miteInstance={mite}>
+  {/* Your app */}
+</MiteProvider>
+```
+
+| Prop | Type | Description |
+| --- | --- | --- |
+| `miteInstance` | `Mite` | The instance to provide. Required |
+| `children` | `React.ReactNode` | Your app |
+
+## ShakeToReport
+
+In-app bug reporting: shake or tap to open, capture a screenshot, annotate,
+submit. Mount once. See [In-App Bug Reporting](/shake-to-report).
+
+```tsx
+<ShakeToReport showFloatingButton onSubmitted={r => console.log(r.id)} />
+```
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `shakeEnabled` | `boolean` | `true` | Listen for shake gestures. Needs `expo-sensors` |
+| `showFloatingButton` | `boolean` | `false` | Render a floating bug button |
+| `screenshotEnabled` | `boolean` | `true` | Capture a screenshot. Needs `react-native-view-shot` |
+| `shakeOptions` | `ShakeDetectorOptions` | — | Sensitivity and timing overrides |
+| `onSubmitted` | `(response: SubmitBugReportResponse) => void` | — | Successful submission |
+| `onError` | `(error: Error) => void` | — | Submission failure |
+
+## ScreenshotAnnotator
+
+Full-screen image editor with a pen tool and a redaction rectangle tool.
+
+```tsx
+<ScreenshotAnnotator
+  imageUri={uri}
+  onDone={annotatedUri => setAttachment(annotatedUri)}
+  onCancel={() => setEditing(false)}
+/>
+```
+
+| Prop | Type | Description |
+| --- | --- | --- |
+| `imageUri` | `string` | Image to annotate. Required |
+| `onDone` | `(annotatedUri: string) => void` | Called with the flattened result. Required |
+| `onCancel` | `() => void` | Called when the user backs out. Required |
+
+## WhatsNew
+
+Shows release notes once per new app version. Mount once. See
+[What's New](/whats-new).
+
+```tsx
+<WhatsNew showOnFirstLaunch title="Latest updates" />
+```
+
+Accepts every [`useWhatsNew` option](/hooks#usewhatsnew) plus:
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `title` | `string` | `"What's New"` | Sheet heading |
+| `dismissLabel` | `string` | `'Got it'` | Dismiss button label |
+| `onDismiss` | `() => void` | — | Called after dismissal |
+
+Follows the system color scheme. Open it imperatively with `showWhatsNew()`.
+
+## FeatureRequestsSheet
+
+Wraps any element as a trigger that opens the feature request board. See
+[Feature Requests](/feature-requests).
+
+```tsx
+<FeatureRequestsSheet>
+  <Text>Request a feature</Text>
+</FeatureRequestsSheet>
+```
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `children` | `ReactNode` | — | Trigger element |
+| `title` | `string` | `'Feature requests'` | Sheet heading |
+| `accentColor` | `string` | `#0a7ea4` | Vote and submit button color |
+| `onSubmitted` | `(featureRequestId: string) => void` | — | Successful submission |
+
+The board is fetched lazily when the sheet opens.
+
+## StoreReviewPrompt
+
+Asks "Enjoying the app?" and routes the answer. See
+[Store Review Prompt](/store-review).
+
+```tsx
+<StoreReviewPrompt visible={visible} onClose={() => setVisible(false)} />
+```
+
+| Prop | Type | Default |
+| --- | --- | --- |
+| `visible` | `boolean` | — |
+| `onClose` | `() => void` | — |
+| `title` | `string` | `'Enjoying the app?'` |
+| `message` | `string` | `'Your feedback helps us improve.'` |
+| `positiveText` | `string` | `'Yes, I love it!'` |
+| `negativeText` | `string` | `'Not really'` |
+| `feedbackTitle` | `string` | `'What could be better?'` |
+| `feedbackPlaceholder` | `string` | `'Tell us what went wrong...'` |
+| `feedbackSubmitText` | `string` | `'Send feedback'` |
+| `dismissText` | `string` | `'Not now'` |
+| `feedbackReportTitle` | `string` | `'In-app feedback'` |
+| `onPositive` | `(reviewRequested: boolean) => void` | — |
+| `onNegative` | `() => void` | — |
+| `onFeedbackSubmitted` | `(response: SubmitBugReportResponse) => void` | — |
+
+Providing `onNegative` skips the built-in feedback step.

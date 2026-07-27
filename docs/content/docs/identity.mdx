@@ -3,11 +3,44 @@ title: Identity Management
 description: How user identification and anonymous tracking work in the Mite SDK.
 ---
 
-When `mite.init()` runs, the SDK generates an anonymous user ID automatically and syncs it to the identify endpoint in the background.
+Every Mite instance has an **anonymous ID**, generated on construction. It is
+attached to every bug report, feature request, and vote, so you can group a
+single user's activity without them ever logging in.
 
-If you provide `identityStorage`, that anonymous ID survives app restarts so the same installed app instance keeps the same anonymous identity.
+When `mite.init()` runs, the SDK syncs that anonymous ID to the identify
+endpoint in the background. Failures there are swallowed — later calls reuse the
+latest local state.
 
-## Identifying Users
+## Persisting the anonymous ID
+
+Pass `identityStorage` so the anonymous ID survives app restarts. Without it the
+ID is in-memory only and a new one is generated on every full reload, which
+makes one user look like many.
+
+```ts
+import AsyncStorage from '@react-native-async-storage/async-storage'
+
+const mite = new Mite({
+  apiKey: process.env.EXPO_PUBLIC_MITE_API_KEY,
+  identityStorage: AsyncStorage,
+})
+```
+
+MMKV instances work directly — the SDK detects the `getString`/`set`/`delete`
+shape and wraps it:
+
+```ts
+import { MMKV } from 'react-native-mmkv'
+
+const mite = new Mite({
+  apiKey: process.env.EXPO_PUBLIC_MITE_API_KEY,
+  identityStorage: new MMKV(),
+})
+```
+
+Identity state is persisted under the `@mite/sdk-identity` key.
+
+## Identifying users
 
 Link a real user to their anonymous session:
 
@@ -15,22 +48,57 @@ Link a real user to their anonymous session:
 await mite.identify({
   user_identifier: 'user_123',
   email: 'user@example.com',
+  name: 'Taylor',
+  metadata: { plan: 'pro' },
 })
 ```
 
-The SDK includes the `anonymous_id` so the backend can link the anonymous user to the known user.
+The SDK includes the current `anonymous_id` automatically so the backend can
+link the anonymous user to the known one. Device info is attached automatically
+too. Every field on `IdentifyUserPayload` is optional — calling
+`mite.identify({})` just re-syncs the current anonymous identity.
 
-## Logging Out
+Once identified, the `user_identifier` is persisted and reused on subsequent bug
+reports, feature requests, and votes until you call `logout()`.
 
-Clear the identified user but keep the anonymous ID:
+## Reading the current identity
+
+```ts
+mite.anonymousId          // string
+mite.userIdentifier       // string | undefined
+mite.isIdentificationOptedOut // boolean
+```
+
+Hydrating identity from storage is asynchronous. On app startup, await
+`whenIdentityReady()` before reading these getters, or you may observe a
+freshly generated ID rather than the persisted one:
+
+```ts
+await mite.whenIdentityReady()
+console.log(mite.anonymousId)
+```
+
+SDK methods that need identity (`submitBug`, `identify`, `createFeatureRequest`,
+`voteFeatureRequest`, `getFeatureRequestVotes`) already await this internally —
+you only need it for direct getter reads.
+
+## Logging out
+
+Clear the identified user while keeping the anonymous ID stable:
 
 ```ts
 await mite.logout()
 ```
 
-## Privacy Opt-Out
+The anonymous ID is deliberately preserved so post-logout activity still
+groups with the same device.
 
-Switch the SDK into anonymous-only mode. In this mode Mite still sends `anonymous_id`, but stops sending `user_identifier`, email/name fields, metadata, and default `device_info`.
+## Privacy opt-out
+
+Switch the SDK into anonymous-only mode. Mite still sends `anonymous_id` — it
+needs something to group activity by — but stops sending `user_identifier`,
+email and name fields, `metadata`, reporter contact fields, and default
+`device_info`.
 
 ```ts
 await mite.setIdentificationOptOut(true)
@@ -41,3 +109,30 @@ To re-enable identification:
 ```ts
 await mite.setIdentificationOptOut(false)
 ```
+
+The preference is persisted alongside the anonymous ID, so it survives restarts.
+You can also start opted out:
+
+```ts
+const mite = new Mite({
+  apiKey: process.env.EXPO_PUBLIC_MITE_API_KEY,
+  identificationOptOut: true,
+})
+```
+
+<Callout>
+  Opting out clears the stored `user_identifier`. Turning identification back on
+  does not restore it — call `identify()` again.
+</Callout>
+
+## Precedence rules
+
+When identity state exists in more than one place, the SDK resolves it in this
+order:
+
+- **`anonymousId` in config** wins over any persisted value.
+- **`identificationOptOut` in config** wins over any persisted value. Leave it
+  undefined to let the user's stored preference apply.
+- A persisted `userIdentifier` is restored on startup unless opted out.
+- Per-call `anonymous_id` / `user_identifier` overrides win over instance state
+  for that single request.

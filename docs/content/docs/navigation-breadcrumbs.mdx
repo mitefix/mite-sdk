@@ -1,0 +1,127 @@
+---
+title: Navigation Breadcrumbs
+description: Attach the trail of screens a user visited before filing a bug report.
+---
+
+Mite records the screens a user visited and attaches that trail to every bug
+report, so "the app crashed" arrives with the path that led there.
+
+The trail is a ring buffer of the last 20 screens by default, kept in memory
+and sent as the top-level `navigation_trail` field on the report.
+
+Breadcrumbs are **enabled by default**. Expo Router and React Navigation are
+both supported through one hook, and neither library is required to use the SDK.
+
+## Expo Router
+
+Add one line to your root layout:
+
+```tsx
+import { useNavigationContainerRef } from 'expo-router'
+import { useMiteNavigationTracking } from '@usemite/sdk'
+
+export default function RootLayout() {
+  useMiteNavigationTracking(useNavigationContainerRef())
+  // ...
+}
+```
+
+## React Navigation
+
+Pass the container ref you already use:
+
+```tsx
+import {
+  NavigationContainer,
+  useNavigationContainerRef,
+} from '@react-navigation/native'
+import { useMiteNavigationTracking } from '@usemite/sdk'
+
+function App() {
+  const navigationRef = useNavigationContainerRef()
+  useMiteNavigationTracking(navigationRef)
+
+  return <NavigationContainer ref={navigationRef}>{/* ... */}</NavigationContainer>
+}
+```
+
+The hook only needs a ref with `isReady`, `getCurrentRoute`, and `addListener` —
+that structural shape is why neither navigation library is a hard dependency. If
+it receives something else it logs a `[Mite]` warning and disables breadcrumbs
+rather than throwing.
+
+## Custom navigation
+
+Record screens yourself:
+
+```ts
+import {
+  recordNavigationBreadcrumb,
+  getNavigationTrail,
+  clearNavigationTrail,
+} from '@usemite/sdk'
+
+recordNavigationBreadcrumb('Settings')
+
+getNavigationTrail() // [{ screen: 'Home', timestamp: 1730000000000 }, ...]
+
+clearNavigationTrail() // e.g. on logout
+```
+
+`getNavigationTrail()` returns a copy, oldest screen first — mutating it does
+not affect the buffer.
+
+## What gets recorded
+
+```ts
+interface NavigationBreadcrumb {
+  screen: string
+  timestamp: number
+}
+```
+
+The tracker deliberately skips some entries:
+
+- **Consecutive duplicates.** Re-entering the screen you are already on does not
+  add a breadcrumb, so a re-render storm cannot flood the buffer.
+- **Empty or non-string names.** Whitespace-only names are ignored.
+
+When the buffer is full the oldest breadcrumb is dropped.
+
+## Configuration
+
+```ts
+const mite = new Mite({
+  apiKey: process.env.EXPO_PUBLIC_MITE_API_KEY,
+  enableNavigationBreadcrumbs: true,
+  maxNavigationBreadcrumbs: 20,
+})
+```
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `enableNavigationBreadcrumbs` | `boolean` | `true` | Record screens and attach the trail to reports |
+| `maxNavigationBreadcrumbs` | `number` | `20` | Screens kept in the buffer |
+
+Setting `enableNavigationBreadcrumbs: false` clears the existing trail
+immediately and stops recording. Lowering `maxNavigationBreadcrumbs` truncates
+the buffer to the most recent entries.
+
+## On the bug report
+
+The trail is sent as a top-level `navigation_trail` field:
+
+```json
+{
+  "title": "Checkout fails",
+  "description": "Tapping Pay does nothing",
+  "navigation_trail": [
+    { "screen": "Home", "timestamp": 1730000000000 },
+    { "screen": "Cart", "timestamp": 1730000012000 },
+    { "screen": "Checkout", "timestamp": 1730000020000 }
+  ]
+}
+```
+
+An empty trail is omitted entirely. Passing `navigation_trail` explicitly on
+`submitBug` overrides the recorded trail for that report.

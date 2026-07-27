@@ -1,0 +1,159 @@
+---
+title: In-App Bug Reporting
+description: Shake to open a bug report, annotate a screenshot, and submit — with one component.
+---
+
+`ShakeToReport` is the complete in-app reporting flow in one component. On a
+shake gesture (or a floating button) it captures a screenshot, lets the user
+redact and draw on it, collects a title and description, and submits the report
+with device and screen context attached.
+
+```tsx
+import { MiteProvider, ShakeToReport } from '@usemite/sdk'
+
+export default function RootLayout() {
+  return (
+    <MiteProvider miteInstance={mite}>
+      {/* Your app */}
+      <ShakeToReport />
+    </MiteProvider>
+  )
+}
+```
+
+Mount it once, anywhere inside `MiteProvider`. It renders nothing until
+triggered.
+
+## Optional dependencies
+
+Both are optional, and each one missing degrades a single capability rather than
+breaking the component:
+
+```sh
+npx expo install expo-sensors react-native-view-shot
+```
+
+- **`expo-sensors`** — powers shake detection. Without it, `ShakeDetector.start()`
+  returns `false` and no shake is ever detected. Set `showFloatingButton` so
+  users still have a way in.
+- **`react-native-view-shot`** — captures the screenshot. Without it, a `[Mite]`
+  warning is logged and the flow skips straight to the form, submitting the
+  report without an attachment.
+
+## Props
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `shakeEnabled` | `boolean` | `true` | Listen for shake gestures |
+| `showFloatingButton` | `boolean` | `false` | Render a floating bug button as an alternative trigger |
+| `screenshotEnabled` | `boolean` | `true` | Capture a screenshot when the flow opens |
+| `shakeOptions` | `ShakeDetectorOptions` | — | Sensitivity and timing overrides |
+| `onSubmitted` | `(response: SubmitBugReportResponse) => void` | — | Called after a successful submission |
+| `onError` | `(error: Error) => void` | — | Called when submission fails |
+
+```tsx
+<ShakeToReport
+  showFloatingButton
+  shakeOptions={{ threshold: 2.2, cooldownMs: 5000 }}
+  onSubmitted={response => console.log('Filed', response.id)}
+  onError={error => console.warn(error.message)}
+/>
+```
+
+## The flow
+
+1. **Trigger** — a shake, or the floating button.
+2. **Capture** — a JPEG screenshot at quality `0.9`, written to a temp file.
+   Skipped when `screenshotEnabled` is `false` or `react-native-view-shot` is
+   absent.
+3. **Annotate** — the [screenshot annotator](#screenshot-annotator) opens when a
+   screenshot exists. Otherwise the form opens directly.
+4. **Form** — title and description. Both are required; the form shows
+   "Title and description are required." if either is blank.
+5. **Submit** — sent through `mite.submitBug` with the annotated screenshot
+   attached as `screenshot.jpg`.
+
+Re-triggering while the flow is already open is ignored.
+
+### Context attached automatically
+
+Beyond the [standard bug report enrichment](/bug-reports#what-the-sdk-fills-in-automatically),
+`ShakeToReport` sets `environment` to:
+
+```ts
+{
+  source: 'shake-to-report',
+  trigger: 'shake' | 'button',
+  platform: 'ios' | 'android',
+  os_version: string,
+  screen_width: number,
+  screen_height: number,
+  pixel_ratio: number,
+  font_scale: number,
+}
+```
+
+## Tuning shake detection
+
+Shake detection reads the accelerometer and fires when enough over-threshold
+samples land inside a rolling window.
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `threshold` | `number` | `1.8` | Acceleration magnitude in g a sample must exceed. Gravity is ~1g at rest |
+| `minShakes` | `number` | `3` | Over-threshold samples needed within the window |
+| `shakeWindowMs` | `number` | `1000` | Window in which those samples must occur |
+| `cooldownMs` | `number` | `2000` | Time after a detected shake during which shakes are ignored |
+| `updateIntervalMs` | `number` | `100` | Accelerometer sampling interval |
+
+Raise `threshold` if the flow opens during normal use; lower it if deliberate
+shakes are missed.
+
+### Using the detector directly
+
+`ShakeDetector` is exported if you want a shake gesture for something else:
+
+```ts
+import { ShakeDetector } from '@usemite/sdk'
+
+const detector = new ShakeDetector({ threshold: 2.0 })
+const started = detector.start(() => console.log('shake!'))
+
+if (!started) {
+  // expo-sensors is not installed
+}
+
+// later
+detector.stop()
+```
+
+`start()` returns `false` when the accelerometer is unavailable — check it
+rather than assuming the listener is live.
+
+## Screenshot annotator
+
+`ScreenshotAnnotator` is the full-screen editor `ShakeToReport` opens after
+capture. It offers a pen tool for drawing and a rectangle tool for redacting
+sensitive regions. You can use it standalone for any image:
+
+```tsx
+import { ScreenshotAnnotator } from '@usemite/sdk'
+
+<ScreenshotAnnotator
+  imageUri={uri}
+  onDone={annotatedUri => setAttachment(annotatedUri)}
+  onCancel={() => setEditing(false)}
+/>
+```
+
+| Prop | Type | Description |
+| --- | --- | --- |
+| `imageUri` | `string` | Image to annotate |
+| `onDone` | `(annotatedUri: string) => void` | Called with the flattened result |
+| `onCancel` | `() => void` | Called when the user backs out |
+
+## Building your own flow
+
+If the built-in UI does not fit, compose the pieces yourself — `ShakeDetector`
+for the trigger, `ScreenshotAnnotator` for editing, and
+[`useBugReport`](/bug-reports#using-the-hook) for submission.
