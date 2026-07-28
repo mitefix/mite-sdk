@@ -126,6 +126,70 @@ describe('Mite', () => {
 
       expect(mite.anonymousId).toBe('anon_persisted')
     })
+
+    it('keeps the stored anonymous id when the hydration read fails', async () => {
+      mockAxios.post.mockResolvedValue({ data: { id: '123', created: true } })
+      const backing = createStorage({
+        '@mite/sdk-identity': JSON.stringify({
+          anonymousId: 'anon_persisted',
+          identificationOptOut: false,
+        }),
+      })
+      let failRead = true
+      const storage: MiteIdentityStorage = {
+        getItem: key =>
+          failRead
+            ? Promise.reject(new Error('storage unavailable'))
+            : backing.getItem(key),
+        setItem: (key, value) => backing.setItem(key, value),
+        removeItem: key => backing.removeItem(key),
+      }
+
+      const first = new Mite({ apiKey: 'test-key', identityStorage: storage })
+      await first.getReleases().catch(() => undefined)
+      expect(first.anonymousId).not.toBe('anon_persisted')
+
+      failRead = false
+      const second = new Mite({ apiKey: 'test-key', identityStorage: storage })
+      await second.identify({})
+
+      expect(second.anonymousId).toBe('anon_persisted')
+    })
+
+    it('does not poison later calls when the hydration write fails', async () => {
+      mockAxios.post.mockResolvedValue({ data: { id: '123', created: true } })
+      const storage: MiteIdentityStorage = {
+        getItem: async () => null,
+        setItem: async () => {
+          throw new Error('storage unavailable')
+        },
+        removeItem: async () => undefined,
+      }
+
+      const mite = new Mite({ apiKey: 'test-key', identityStorage: storage })
+
+      await expect(
+        mite.submitBug({ title: 'a', description: 'b' }),
+      ).resolves.toBeDefined()
+    })
+
+    it('warns when configured identity storage does not work', async () => {
+      mockAxios.post.mockResolvedValue({ data: { id: '123', created: true } })
+      const storage: MiteIdentityStorage = {
+        getItem: async () => {
+          throw new Error('storage unavailable')
+        },
+        setItem: async () => undefined,
+        removeItem: async () => undefined,
+      }
+
+      const mite = new Mite({ apiKey: 'test-key', identityStorage: storage })
+      await mite.identify({})
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[Mite] Identity storage read failed.'),
+      )
+    })
   })
 
   describe('init', () => {
