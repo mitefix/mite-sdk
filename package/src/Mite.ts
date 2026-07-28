@@ -496,9 +496,20 @@ export class Mite {
   }
 
   private async hydrateIdentityState(): Promise<void> {
+    let storedState: string | null
+
     try {
-      const storedState = await this.identityStorage.getItem(IDENTITY_STORAGE_KEY)
-      if (storedState) {
+      storedState = await this.identityStorage.getItem(IDENTITY_STORAGE_KEY)
+    } catch {
+      // The read failed, so we do not know what is on disk. Returning here keeps
+      // whatever is stored intact so a later launch can still recover the real
+      // anonymous id, at the cost of this session using a throwaway one.
+      this.handleIdentityStorageFailure('read')
+      return
+    }
+
+    if (storedState) {
+      try {
         const parsed = JSON.parse(storedState) as Partial<PersistedIdentityState>
 
         if (!this.config.anonymousId && parsed.anonymousId) {
@@ -515,12 +526,35 @@ export class Mite {
         if (parsed.userIdentifier) {
           this.currentUserIdentifier = parsed.userIdentifier
         }
+      } catch {
+        // The stored payload is unreadable and cannot be recovered, so fall
+        // through and replace it with current state.
       }
-    } catch {
-      // Ignore storage hydration errors and continue with in-memory state.
     }
 
-    await this.persistIdentityState()
+    try {
+      await this.persistIdentityState()
+    } catch {
+      this.handleIdentityStorageFailure('write')
+    }
+  }
+
+  /**
+   * Called when identity storage was configured but did not work. The anonymous
+   * id is not durable for this session, so this app launch will look like a new
+   * end user to the backend.
+   */
+  private handleIdentityStorageFailure(operation: 'read' | 'write'): void {
+    this.hasPersistentIdentityStorage = false
+
+    const consequence =
+      operation === 'read'
+        ? 'This launch is reported as a new anonymous user.'
+        : 'This launch and every later launch are reported as new anonymous users.'
+
+    console.warn(
+      `[Mite] Identity storage ${operation} failed. ${consequence} Check the identityStorage adapter passed to new Mite().`,
+    )
   }
 
   private async persistIdentityState(): Promise<void> {
