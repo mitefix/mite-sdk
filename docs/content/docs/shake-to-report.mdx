@@ -50,6 +50,7 @@ npx expo install expo-sensors react-native-view-shot
 | `shakeOptions` | `ShakeDetectorOptions` | — | Sensitivity and timing overrides |
 | `onSubmitted` | `(response: SubmitBugReportResponse) => void` | — | Called after a successful submission |
 | `onError` | `(error: Error) => void` | — | Called when submission fails |
+| `onQuotaExceeded` | `(refusal: MiteQuotaRefusal) => void` | — | Called when the account is over a [plan limit](/quotas) |
 
 ```tsx
 <ShakeToReport

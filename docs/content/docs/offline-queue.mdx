@@ -26,6 +26,11 @@ means the server was reached and answered, so the report is **not** queued.
 
 Feature requests, votes, and `identify` calls are not queued.
 
+A [plan quota refusal](/quotas) is never queued and never retried, at any level
+of the SDK. The result cannot change until the plan changes or the billing
+period ends, so a queued report would only grow the queue. An entry that meets a
+402 during a flush is dropped at once instead of counting against its retries.
+
 <Callout type="warn">
   `submitBug` still rejects after queuing. Queuing is a background safety net,
   not a silent success — your UI decides what to tell the user. Check
@@ -34,8 +39,8 @@ Feature requests, votes, and `identify` calls are not queued.
 
 ```ts
 try {
-  await mite.submitBug({ title, description })
-  showToast('Thanks for the report!')
+  const result = await mite.submitBug({ title, description })
+  showToast(result.ok ? 'Thanks for the report!' : 'Reports are not being accepted right now.')
 } catch {
   showToast(
     mite.pendingRequestCount > 0

@@ -73,6 +73,34 @@ describe('OfflineQueue', () => {
     queue.destroy()
   })
 
+  it('drops a request that meets a plan quota refusal, without a retry', async () => {
+    const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation()
+    const postFn = jest.fn().mockRejectedValue({
+      isAxiosError: true,
+      response: {
+        status: 402,
+        data: {
+          error: 'This account has used all 50 reports in its current billing period.',
+          code: 'REPORT_QUOTA_EXCEEDED',
+          quota: { limit: 50, used: 50 },
+        },
+      },
+    })
+    const client = createMockApiClient(postFn)
+    const queue = new OfflineQueue(client, 5)
+
+    queue.enqueue('post', '/api/v1/bug-reports', { title: 'test' })
+    await queue.flush()
+
+    // One attempt only, and the entry is gone rather than waiting for four
+    // more flush cycles that cannot succeed.
+    expect(postFn).toHaveBeenCalledTimes(1)
+    expect(queue.pendingCount).toBe(0)
+
+    queue.destroy()
+    consoleWarnSpy.mockRestore()
+  })
+
   it('handles put requests', async () => {
     const putFn = jest.fn().mockResolvedValue({})
     const client = createMockApiClient(undefined, putFn)

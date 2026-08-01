@@ -625,7 +625,7 @@ describe('Mite', () => {
         description: 'A test bug report',
       })
 
-      expect(result).toEqual({ id: 'bug-1', status: 'OPEN' })
+      expect(result).toEqual({ ok: true, report: { id: 'bug-1', status: 'OPEN' } })
     })
 
     it('includes the anonymous id automatically in bug reports', async () => {
@@ -939,6 +939,197 @@ describe('Mite', () => {
         }),
         undefined,
       )
+    })
+  })
+
+  describe('submitBug plan quota refusals', () => {
+    // The billing period must still be open, or the gate opens again at once.
+    const RESETS_AT = Date.now() + 60_000
+
+    const REPORT_REFUSAL = {
+      isAxiosError: true,
+      response: {
+        status: 402,
+        data: {
+          error: 'This account has used all 50 reports in its current billing period.',
+          code: 'REPORT_QUOTA_EXCEEDED',
+          quota: { limit: 50, used: 50, resets_at: RESETS_AT },
+        },
+      },
+    }
+
+    const STORAGE_REFUSAL = {
+      isAxiosError: true,
+      response: {
+        status: 402,
+        data: {
+          error: 'This account has used all of its attachment storage.',
+          code: 'STORAGE_QUOTA_EXCEEDED',
+          quota: { limit: 104857600, used: 104857600 },
+        },
+      },
+    }
+
+    it('does not throw when the report endpoint refuses, and sends one request', async () => {
+      mockAxios.post.mockRejectedValueOnce(REPORT_REFUSAL)
+
+      const mite = new Mite({ apiKey: 'test' })
+      const result = await mite.submitBug({ title: 'a', description: 'b' })
+
+      expect(result).toEqual({
+        ok: false,
+        refusal: {
+          code: 'REPORT_QUOTA_EXCEEDED',
+          message: 'This account has used all 50 reports in its current billing period.',
+          quota: { limit: 50, used: 50, resetsAt: RESETS_AT },
+        },
+      })
+      expect(mockAxios.post).toHaveBeenCalledTimes(1)
+    })
+
+    it('sends the report without the attachment when storage is full', async () => {
+      mockAxios.post
+        .mockRejectedValueOnce(STORAGE_REFUSAL)
+        .mockResolvedValueOnce({ data: { id: 'bug-1', status: 'OPEN' } })
+
+      const mite = new Mite({ apiKey: 'test' })
+      const result = await mite.submitBug({
+        title: 'a',
+        description: 'b',
+        attachments: [{ uri: 'file://shot.jpg', type: 'image/jpeg' }],
+      })
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) throw new Error('expected a report')
+      expect(result.report).toEqual({ id: 'bug-1', status: 'OPEN' })
+      expect(result.droppedAttachments).toEqual({
+        count: 1,
+        refusal: expect.objectContaining({ code: 'STORAGE_QUOTA_EXCEEDED' }),
+      })
+
+      expect(mockAxios.post).toHaveBeenNthCalledWith(
+        1,
+        '/api/v1/upload-url',
+        undefined,
+        undefined,
+      )
+      expect(mockAxios.post).toHaveBeenNthCalledWith(
+        2,
+        '/api/v1/bug-reports',
+        expect.objectContaining({ attachments: undefined }),
+        undefined,
+      )
+    })
+
+    it('sends no report when the upload URL refuses with the report code', async () => {
+      mockAxios.post.mockRejectedValueOnce(REPORT_REFUSAL)
+
+      const mite = new Mite({ apiKey: 'test' })
+      const result = await mite.submitBug({
+        title: 'a',
+        description: 'b',
+        attachments: [{ uri: 'file://shot.jpg' }],
+      })
+
+      expect(result).toEqual({
+        ok: false,
+        refusal: expect.objectContaining({ code: 'REPORT_QUOTA_EXCEEDED' }),
+      })
+      expect(mockAxios.post).toHaveBeenCalledTimes(1)
+      expect(mockAxios.post).not.toHaveBeenCalledWith(
+        '/api/v1/bug-reports',
+        expect.anything(),
+        expect.anything(),
+      )
+    })
+
+    it('sends no request for a later report while the gate is closed', async () => {
+      mockAxios.post.mockRejectedValueOnce(REPORT_REFUSAL)
+
+      const mite = new Mite({ apiKey: 'test' })
+      await mite.submitBug({ title: 'a', description: 'b' })
+      mockAxios.post.mockClear()
+
+      const second = await mite.submitBug({ title: 'c', description: 'd' })
+
+      expect(second).toEqual({
+        ok: false,
+        refusal: expect.objectContaining({ code: 'REPORT_QUOTA_EXCEEDED' }),
+      })
+      expect(mockAxios.post).not.toHaveBeenCalled()
+    })
+
+    it('opens the gate again once the billing period has turned over', async () => {
+      mockAxios.post
+        .mockRejectedValueOnce({
+          ...REPORT_REFUSAL,
+          response: {
+            ...REPORT_REFUSAL.response,
+            data: {
+              ...REPORT_REFUSAL.response.data,
+              quota: { limit: 50, used: 50, resets_at: Date.now() - 1 },
+            },
+          },
+        })
+        .mockResolvedValueOnce({ data: { id: 'bug-2', status: 'OPEN' } })
+
+      const mite = new Mite({ apiKey: 'test' })
+      await mite.submitBug({ title: 'a', description: 'b' })
+      const second = await mite.submitBug({ title: 'c', description: 'd' })
+
+      expect(second).toEqual({ ok: true, report: { id: 'bug-2', status: 'OPEN' } })
+    })
+
+    it('does not queue a refused report for a retry', async () => {
+      mockAxios.post.mockRejectedValueOnce(REPORT_REFUSAL)
+
+      const mite = new Mite({ apiKey: 'test' })
+      mite.init()
+      await mite.submitBug({ title: 'a', description: 'b' })
+
+      expect(mite.pendingRequestCount).toBe(0)
+      mite.destroy()
+    })
+
+    it('calls onQuotaExceeded once for each refusal', async () => {
+      mockAxios.post
+        .mockRejectedValueOnce(STORAGE_REFUSAL)
+        .mockResolvedValueOnce({ data: { id: 'bug-1', status: 'OPEN' } })
+        .mockRejectedValueOnce(REPORT_REFUSAL)
+
+      const onQuotaExceeded = jest.fn()
+      const mite = new Mite({ apiKey: 'test', onQuotaExceeded })
+
+      await mite.submitBug({
+        title: 'a',
+        description: 'b',
+        attachments: [{ uri: 'file://shot.jpg' }],
+      })
+      expect(onQuotaExceeded).toHaveBeenCalledTimes(1)
+      expect(onQuotaExceeded).toHaveBeenLastCalledWith(
+        expect.objectContaining({ code: 'STORAGE_QUOTA_EXCEEDED' }),
+      )
+
+      await mite.submitBug({ title: 'c', description: 'd' })
+      expect(onQuotaExceeded).toHaveBeenCalledTimes(2)
+      expect(onQuotaExceeded).toHaveBeenLastCalledWith(
+        expect.objectContaining({ code: 'REPORT_QUOTA_EXCEEDED' }),
+      )
+    })
+
+    it('keeps working when the onQuotaExceeded handler throws', async () => {
+      mockAxios.post.mockRejectedValueOnce(REPORT_REFUSAL)
+
+      const mite = new Mite({
+        apiKey: 'test',
+        onQuotaExceeded: () => {
+          throw new Error('handler is broken')
+        },
+      })
+
+      const result = await mite.submitBug({ title: 'a', description: 'b' })
+
+      expect(result.ok).toBe(false)
     })
   })
 })

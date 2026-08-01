@@ -1,4 +1,5 @@
 import type { ApiClient } from './utils/client'
+import { parseQuotaRefusal } from './utils/quota'
 
 interface QueuedRequest {
   id: string
@@ -83,7 +84,18 @@ export class OfflineQueue {
           await this.apiClient.put(item.url, item.data)
         }
         completed.push(item.id)
-      } catch {
+      } catch (err) {
+        // A plan quota refusal cannot succeed on a retry. Drop it now, so the
+        // queue does not grow for as long as the app stays over quota.
+        const refusal = parseQuotaRefusal(err)
+        if (refusal) {
+          completed.push(item.id)
+          console.warn(
+            `[Mite] Dropping queued request to ${item.url}: ${refusal.message}`,
+          )
+          continue
+        }
+
         item.retries++
         if (item.retries >= this.maxRetries) {
           completed.push(item.id)

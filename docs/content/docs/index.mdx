@@ -100,6 +100,7 @@ interface MiteConfig {
   enableOfflineQueue?: boolean
   enableNavigationBreadcrumbs?: boolean
   maxNavigationBreadcrumbs?: number
+  onQuotaExceeded?: (refusal: MiteQuotaRefusal) => void
 }
 ```
 
@@ -115,6 +116,7 @@ interface MiteConfig {
 | `enableOfflineQueue` | `boolean` | `true` | Retry bug reports that fail on a network error |
 | `enableNavigationBreadcrumbs` | `boolean` | `true` | Attach the [navigation trail](/navigation-breadcrumbs) to bug reports |
 | `maxNavigationBreadcrumbs` | `number` | `20` | Screens kept in the navigation trail |
+| `onQuotaExceeded` | `(refusal) => void` | — | Called on a [plan quota refusal](/quotas) |
 
 <Callout type="warn">
   `apiKey` is typed as optional so you can construct an instance without one,

@@ -12,10 +12,11 @@ import type {
   IdentifyUserResponse,
   MiteConfig,
   MiteIdentityStorage,
+  MiteQuotaRefusal,
   Release,
   ReleasesResponse,
   SubmitBugReportPayload,
-  SubmitBugReportResponse,
+  SubmitBugResult,
   VoteFeatureRequestPayload,
   VoteFeatureRequestResponse,
 } from './types'
@@ -79,6 +80,12 @@ export class Mite {
   private currentAnonymousId: string
   private currentUserIdentifier?: string
   private identificationOptOut: boolean
+  /**
+   * The last report quota refusal. While it is set, `submitBug` refuses
+   * locally instead of sending a request that cannot succeed. Not persisted,
+   * so an app restart costs at most one wasted request.
+   */
+  private reportQuotaRefusal: MiteQuotaRefusal | null = null
 
   constructor(config: MiteConfig) {
     this.config = config
@@ -151,24 +158,56 @@ export class Mite {
       this.offlineQueue = null
     }
 
+    this.reportQuotaRefusal = null
     this.initialized = false
   }
 
   /**
    * Submit a bug report to the server.
-   * If the request fails and offline queue is enabled, it will be retried.
+   *
+   * The result tells you what happened. `ok: false` means the account is over
+   * a plan limit and the server made no report. A quota refusal does not
+   * throw, because it is an expected state and not a fault. Network faults and
+   * bad configuration still throw.
+   *
+   * If the request fails with a network error and the offline queue is
+   * enabled, the report is queued for a later retry. A quota refusal is never
+   * queued and never retried.
    */
   async submitBug(
     payload: Omit<SubmitBugReportPayload, 'appId' | 'deviceInfo'>,
-  ): Promise<SubmitBugReportResponse> {
+  ): Promise<SubmitBugResult> {
     this.requireApiKey('submit bug reports')
+
+    const gated = this.getActiveReportQuotaRefusal()
+    if (gated) {
+      // The account is out of reports and the period has not turned over.
+      // Send nothing.
+      this.notifyQuotaExceeded(gated)
+      return { ok: false, refusal: gated }
+    }
+
     await this.ensureIdentityReady()
     const payloadWithIdentity = this.buildBugReportPayload(payload)
 
     try {
-      return await this.bugReporter.sendBugReportToServer(payloadWithIdentity, {
+      const result = await this.bugReporter.sendBugReportToServer(payloadWithIdentity, {
         includeDefaultDeviceInfo: !this.identificationOptOut,
       })
+
+      if (!result.ok) {
+        if (result.refusal.code === 'REPORT_QUOTA_EXCEEDED') {
+          this.reportQuotaRefusal = result.refusal
+        }
+        this.notifyQuotaExceeded(result.refusal)
+      } else if (result.droppedAttachments) {
+        console.warn(
+          `[Mite] ${result.droppedAttachments.count} attachment(s) were dropped: ${result.droppedAttachments.refusal.message}`,
+        )
+        this.notifyQuotaExceeded(result.droppedAttachments.refusal)
+      }
+
+      return result
     } catch (err) {
       if (this.offlineQueue && this.isNetworkError(err)) {
         const { attachments, ...payloadWithoutAttachments } = payloadWithIdentity
@@ -473,6 +512,31 @@ export class Mite {
 
   get isIdentificationOptedOut(): boolean {
     return this.identificationOptOut
+  }
+
+  /**
+   * The report quota refusal that is still in force, if any. The gate opens
+   * again once the billing period turns over.
+   */
+  private getActiveReportQuotaRefusal(): MiteQuotaRefusal | null {
+    const refusal = this.reportQuotaRefusal
+    if (!refusal) return null
+
+    const resetsAt = refusal.quota.resetsAt
+    if (typeof resetsAt === 'number' && Date.now() >= resetsAt) {
+      this.reportQuotaRefusal = null
+      return null
+    }
+
+    return refusal
+  }
+
+  private notifyQuotaExceeded(refusal: MiteQuotaRefusal): void {
+    try {
+      this.config.onQuotaExceeded?.(refusal)
+    } catch (err) {
+      console.error('[Mite] onQuotaExceeded handler threw:', err)
+    }
   }
 
   private isNetworkError(err: unknown): boolean {

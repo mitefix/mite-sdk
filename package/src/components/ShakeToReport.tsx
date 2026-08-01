@@ -15,11 +15,20 @@ import {
 } from 'react-native'
 import { useMite } from '../MiteProvider'
 import { ShakeDetector, type ShakeDetectorOptions } from '../ShakeDetector'
-import type { SubmitBugReportResponse } from '../types'
+import type { MiteQuotaRefusal, SubmitBugReportResponse } from '../types'
 import { loadViewShot } from '../utils/optionalModules'
 import { ScreenshotAnnotator } from './ScreenshotAnnotator'
 
 type ReportStep = 'idle' | 'annotate' | 'form'
+
+/**
+ * Shown when the account is out of reports. The message from the server is
+ * written for the developer who owns the account, not for the person who is
+ * holding the phone, so the component does not show it. The limit clears when
+ * the billing period turns over, so "later" is accurate.
+ */
+const REPORT_QUOTA_MESSAGE =
+  'Reports are not being accepted right now. Please try again later.'
 type ReportTrigger = 'shake' | 'button'
 
 export interface ShakeToReportProps {
@@ -50,6 +59,12 @@ export interface ShakeToReportProps {
    * Called when submitting the bug report fails.
    */
   onError?: (error: Error) => void
+  /**
+   * Called when the account is over a plan limit. A `REPORT_QUOTA_EXCEEDED`
+   * refusal means no report was created. A `STORAGE_QUOTA_EXCEEDED` refusal
+   * means the report was created without its screenshot.
+   */
+  onQuotaExceeded?: (refusal: MiteQuotaRefusal) => void
 }
 
 function buildEnvironment(trigger: ReportTrigger): Record<string, unknown> {
@@ -80,6 +95,7 @@ export function ShakeToReport({
   shakeOptions,
   onSubmitted,
   onError,
+  onQuotaExceeded,
 }: ShakeToReportProps) {
   const mite = useMite()
 
@@ -164,7 +180,7 @@ export function ShakeToReport({
     setSubmitError(null)
 
     try {
-      const response = await mite.submitBug({
+      const result = await mite.submitBug({
         title: title.trim(),
         description: description.trim(),
         environment: buildEnvironment(triggerRef.current),
@@ -180,8 +196,23 @@ export function ShakeToReport({
             }
           : {}),
       })
+
+      if (!result.ok) {
+        // No report exists. Keep the form open with what the user wrote, and
+        // do not offer a retry, because a retry cannot succeed.
+        setSubmitError(REPORT_QUOTA_MESSAGE)
+        onQuotaExceeded?.(result.refusal)
+        return
+      }
+
+      // The report exists. A dropped screenshot is worth telling the
+      // developer about, but it is not a reason to hold up the user.
+      if (result.droppedAttachments) {
+        onQuotaExceeded?.(result.droppedAttachments.refusal)
+      }
+
       closeReport()
-      onSubmitted?.(response)
+      onSubmitted?.(result.report)
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to submit bug report')
       setSubmitError('Failed to submit. Please try again.')
@@ -194,6 +225,7 @@ export function ShakeToReport({
     description,
     mite,
     onError,
+    onQuotaExceeded,
     onSubmitted,
     screenshotUri,
     submitting,

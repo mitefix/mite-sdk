@@ -125,9 +125,10 @@ The method returns `SubmitBugResult`. The attachment loop changes:
 | `/bug-reports` refuses with either code | Return `ok: false` with that refusal. |
 | Any other error | Throw, as it does today. |
 
-The dropped count is the number of attachments the caller supplied. The loop
-stops at the first refusal, and storage is a standing total, so the later files
-cannot fit either.
+The dropped count is the number of attachments that did not upload, which is
+the number supplied less the number already uploaded. The loop stops at the
+first refusal, and storage is a standing total, so the files that are left
+cannot fit either. Files that uploaded before the refusal stay on the report.
 
 A `STORAGE_QUOTA_EXCEEDED` from `/bug-reports` is almost impossible, because
 storage is consumed at upload time. The SDK does not post a second time without
