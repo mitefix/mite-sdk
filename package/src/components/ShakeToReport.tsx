@@ -22,13 +22,14 @@ import { ScreenshotAnnotator } from './ScreenshotAnnotator'
 type ReportStep = 'idle' | 'annotate' | 'form'
 
 /**
- * Shown when the account is out of reports. The message from the server is
- * written for the developer who owns the account, not for the person who is
- * holding the phone, so the component does not show it. The limit clears when
- * the billing period turns over, so "later" is accurate.
+ * Default for `quotaMessage`. The message from the server is written for the
+ * developer who owns the account, not for the person who is holding the phone,
+ * so the component does not show it. The limit clears when the billing period
+ * turns over, so "later" is accurate.
  */
-const REPORT_QUOTA_MESSAGE =
+const DEFAULT_QUOTA_MESSAGE =
   'Reports are not being accepted right now. Please try again later.'
+
 type ReportTrigger = 'shake' | 'button'
 
 export interface ShakeToReportProps {
@@ -65,6 +66,12 @@ export interface ShakeToReportProps {
    * means the report was created without its screenshot.
    */
   onQuotaExceeded?: (refusal: MiteQuotaRefusal) => void
+  /**
+   * Text shown in the form when the account is out of reports. Do not show
+   * `refusal.message` here — it is written for you, not for your users.
+   * @default 'Reports are not being accepted right now. Please try again later.'
+   */
+  quotaMessage?: string
 }
 
 function buildEnvironment(trigger: ReportTrigger): Record<string, unknown> {
@@ -96,6 +103,7 @@ export function ShakeToReport({
   onSubmitted,
   onError,
   onQuotaExceeded,
+  quotaMessage = DEFAULT_QUOTA_MESSAGE,
 }: ShakeToReportProps) {
   const mite = useMite()
 
@@ -200,7 +208,7 @@ export function ShakeToReport({
       if (!result.ok) {
         // No report exists. Keep the form open with what the user wrote, and
         // do not offer a retry, because a retry cannot succeed.
-        setSubmitError(REPORT_QUOTA_MESSAGE)
+        setSubmitError(quotaMessage)
         onQuotaExceeded?.(result.refusal)
         return
       }
@@ -227,6 +235,7 @@ export function ShakeToReport({
     onError,
     onQuotaExceeded,
     onSubmitted,
+    quotaMessage,
     screenshotUri,
     submitting,
     title,

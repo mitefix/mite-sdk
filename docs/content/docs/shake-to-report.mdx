@@ -51,6 +51,7 @@ npx expo install expo-sensors react-native-view-shot
 | `onSubmitted` | `(response: SubmitBugReportResponse) => void` | — | Called after a successful submission |
 | `onError` | `(error: Error) => void` | — | Called when submission fails |
 | `onQuotaExceeded` | `(refusal: MiteQuotaRefusal) => void` | — | Called when the account is over a [plan limit](/quotas) |
+| `quotaMessage` | `string` | See [Plan Quotas](/quotas) | Text shown in the form when the account is out of reports |
 
 ```tsx
 <ShakeToReport

@@ -4,10 +4,11 @@ import { useMite } from '../MiteProvider'
 import type { MiteQuotaRefusal, SubmitBugReportResponse } from '../types'
 
 /**
- * Shown when the account is out of reports. The server message names the
- * account plan, which means nothing to the person giving the feedback.
+ * Default for `quotaMessage`. The server message names the account plan, which
+ * means nothing to the person giving the feedback.
  */
-const QUOTA_MESSAGE = 'Feedback is not being accepted right now. Please try again later.'
+const DEFAULT_QUOTA_MESSAGE =
+  'Feedback is not being accepted right now. Please try again later.'
 
 export interface StoreReviewPromptProps {
   /** Controls the visibility of the prompt. */
@@ -49,6 +50,12 @@ export interface StoreReviewPromptProps {
    * be recorded.
    */
   onQuotaExceeded?: (refusal: MiteQuotaRefusal) => void
+  /**
+   * Text shown when the account is out of reports. Do not show
+   * `refusal.message` here — it is written for you, not for your users.
+   * @default 'Feedback is not being accepted right now. Please try again later.'
+   */
+  quotaMessage?: string
 }
 
 type PromptStep = 'ask' | 'feedback'
@@ -74,6 +81,7 @@ export function StoreReviewPrompt({
   onNegative,
   onFeedbackSubmitted,
   onQuotaExceeded,
+  quotaMessage = DEFAULT_QUOTA_MESSAGE,
 }: StoreReviewPromptProps) {
   const mite = useMite()
   const [step, setStep] = useState<PromptStep>('ask')
@@ -124,7 +132,7 @@ export function StoreReviewPrompt({
       if (!result.ok) {
         // Keep the text the user wrote on screen. A retry cannot succeed, so
         // the message does not ask for one.
-        setError(QUOTA_MESSAGE)
+        setError(quotaMessage)
         setSubmitting(false)
         onQuotaExceeded?.(result.refusal)
         return
@@ -144,6 +152,7 @@ export function StoreReviewPrompt({
     mite,
     onFeedbackSubmitted,
     onQuotaExceeded,
+    quotaMessage,
     submitting,
   ])
 

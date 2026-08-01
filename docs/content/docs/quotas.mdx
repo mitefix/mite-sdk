@@ -142,3 +142,12 @@ disk, so a restart of the app costs at most one more request.
 you. They keep the form open with the text the user wrote, show a neutral
 message, and call their `onQuotaExceeded` prop. They do not call `onSubmitted`,
 because no report exists.
+
+Set `quotaMessage` to write your own copy or to translate it:
+
+```tsx
+<ShakeToReport
+  quotaMessage="We cannot take reports at the moment. Please write to support@example.com."
+  onQuotaExceeded={refusal => console.warn(refusal.code)}
+/>
+```
