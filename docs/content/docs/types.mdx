@@ -28,6 +28,7 @@ interface MiteConfig {
   enableOfflineQueue?: boolean
   enableNavigationBreadcrumbs?: boolean
   maxNavigationBreadcrumbs?: number
+  onQuotaExceeded?: (refusal: MiteQuotaRefusal) => void
 }
 ```
 
@@ -101,14 +102,49 @@ interface SubmitBugReportResponse {
 }
 ```
 
+### SubmitBugResult
+
+The outcome of a submission. See [Plan Quotas](/quotas).
+
+```ts
+type SubmitBugResult =
+  | {
+      ok: true
+      report: SubmitBugReportResponse
+      droppedAttachments?: { count: number; refusal: MiteQuotaRefusal }
+    }
+  | { ok: false; refusal: MiteQuotaRefusal }
+```
+
+### MiteQuotaRefusal
+
+```ts
+type MiteQuotaCode = 'REPORT_QUOTA_EXCEEDED' | 'STORAGE_QUOTA_EXCEEDED'
+
+interface MiteQuota {
+  limit: number
+  used: number
+  /** Milliseconds since the epoch. On the report code only. */
+  resetsAt?: number
+}
+
+interface MiteQuotaRefusal {
+  code: MiteQuotaCode
+  /** Written for the developer who owns the account, not for end users. */
+  message: string
+  quota: MiteQuota
+}
+```
+
 ### UseBugReportResult
 
 ```ts
 interface UseBugReportResult {
-  submitBug: (payload: BugReportPayload) => Promise<SubmitBugReportResponse>
+  submitBug: (payload: BugReportPayload) => Promise<SubmitBugResult>
   submitting: boolean
   error: Error | null
   lastResponse: SubmitBugReportResponse | null
+  refusal: MiteQuotaRefusal | null
   reset: () => void
 }
 ```

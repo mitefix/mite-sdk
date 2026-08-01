@@ -13,6 +13,7 @@
     "store-review",
     "navigation-breadcrumbs",
     "offline-queue",
+    "quotas",
     "---Reference---",
     "mite-instance",
     "hooks",

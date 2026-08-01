@@ -1,0 +1,158 @@
+---
+title: Plan Quotas
+description: How the Mite SDK behaves when an account reaches its report or attachment storage limit.
+---
+
+Each Mite plan has a limit on the number of bug reports in a billing period and
+on the total attachment storage. When an account reaches a limit, the server
+refuses the request with HTTP 402 and a code.
+
+The SDK does not throw for a refusal. A refusal is an expected state, not a
+fault, so it comes back in the result of `submitBug`.
+
+<Callout>
+  The server counts one quota for each **account**, not for each app. If you
+  have more than one app, they share one report allowance.
+</Callout>
+
+## The two codes
+
+| Code | What it means | What the SDK does |
+| --- | --- | --- |
+| `REPORT_QUOTA_EXCEEDED` | The account has used every report in the current billing period. | Drops the report. Returns `ok: false`. Sends no more reports until the period turns over. |
+| `STORAGE_QUOTA_EXCEEDED` | The account has used all of its attachment storage. | Sends the report **without** the attachments and returns `ok: true` with `droppedAttachments`. |
+
+The report text is the value you must not lose, so a full storage quota never
+stops a report.
+
+## The result
+
+```ts
+type SubmitBugResult =
+  | {
+      ok: true
+      report: SubmitBugReportResponse
+      droppedAttachments?: {
+        count: number
+        refusal: MiteQuotaRefusal
+      }
+    }
+  | { ok: false; refusal: MiteQuotaRefusal }
+
+interface MiteQuotaRefusal {
+  code: 'REPORT_QUOTA_EXCEEDED' | 'STORAGE_QUOTA_EXCEEDED'
+  message: string
+  quota: {
+    limit: number
+    used: number
+    /** Milliseconds since the epoch. On the report code only. */
+    resetsAt?: number
+  }
+}
+```
+
+`resetsAt` is present on `REPORT_QUOTA_EXCEEDED` only. Attachment storage is a
+standing total and does not reset.
+
+<Callout type="warn">
+  `refusal.message` comes from the server and is written for you, the developer
+  who owns the account. Do not show it to your end users — it names your plan
+  and your limits. Write your own copy for them.
+</Callout>
+
+## Handling a refusal
+
+```tsx
+import { useBugReport } from '@usemite/sdk'
+
+export default function BugReportScreen() {
+  const { submitBug, submitting, refusal } = useBugReport()
+
+  const handleSubmit = async () => {
+    const result = await submitBug({ title, description, attachments })
+
+    if (!result.ok) {
+      // No report exists. A retry cannot succeed, so do not offer one.
+      return
+    }
+
+    if (result.droppedAttachments) {
+      console.warn(`${result.droppedAttachments.count} file(s) were not saved`)
+    }
+
+    navigateToThankYou(result.report.id)
+  }
+
+  return (
+    <>
+      <Button onPress={handleSubmit} disabled={submitting} title="Submit" />
+      {refusal ? <Text>Reports are not being accepted right now.</Text> : null}
+    </>
+  )
+}
+```
+
+`refusal` on `useBugReport` is set for both codes. When `lastResponse` is set as
+well, the report went out and only its attachments were dropped.
+
+## The global handler
+
+Add `onQuotaExceeded` to your config to log every refusal in one place:
+
+```tsx
+<MiteProvider
+  config={{
+    apiKey: process.env.EXPO_PUBLIC_MITE_API_KEY,
+    onQuotaExceeded: refusal => {
+      analytics.track('mite_quota_exceeded', {
+        code: refusal.code,
+        used: refusal.quota.used,
+        limit: refusal.quota.limit,
+      })
+    },
+  }}
+>
+  {children}
+</MiteProvider>
+```
+
+The handler runs one time for each refusal, including the refusals the SDK
+serves from its local gate without a request.
+
+## What the SDK never does
+
+* **It never retries a 402.** The result cannot change until the plan changes or
+  the billing period ends. This is true of the HTTP client, the
+  [offline queue](/offline-queue), and the components.
+* **It never queues a refused report.** A queued report would grow the queue for
+  as long as the app stays over quota.
+* **It never throws for a refusal.** Network faults and a missing API key still
+  throw.
+* **It never sends a second request it knows will fail.** When the upload URL
+  request is refused with `REPORT_QUOTA_EXCEEDED`, the SDK stops there, because
+  the report would be refused too.
+
+After a `REPORT_QUOTA_EXCEEDED` that carries a `resetsAt`, the SDK holds the
+refusal in memory and answers later `submitBug` calls itself until that time
+passes. A refusal with no `resetsAt` does not close the gate, because the SDK
+cannot know when to open it again. The gate is not saved to disk, so a restart
+of the app costs at most one more request.
+
+A refusal that a queued request meets during a flush closes the gate and calls
+`onQuotaExceeded` in the same way.
+
+## Components
+
+[`ShakeToReport`](/shake-to-report) and `StoreReviewPrompt` handle a refusal for
+you. They keep the form open with the text the user wrote, show a neutral
+message, and call their `onQuotaExceeded` prop. They do not call `onSubmitted`,
+because no report exists.
+
+Set `quotaMessage` to write your own copy or to translate it:
+
+```tsx
+<ShakeToReport
+  quotaMessage="We cannot take reports at the moment. Please write to support@example.com."
+  onQuotaExceeded={refusal => console.warn(refusal.code)}
+/>
+```

@@ -38,18 +38,19 @@ provider.
 Submit bug reports with submission state. See [Bug Reports](/bug-reports).
 
 ```ts
-const { submitBug, submitting, error, lastResponse, reset } = useBugReport()
+const { submitBug, submitting, error, lastResponse, refusal, reset } = useBugReport()
 ```
 
 ### Return value
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `submitBug` | `(payload: BugReportPayload) => Promise<SubmitBugReportResponse>` | Submit a report. Rejects on failure |
+| `submitBug` | `(payload: BugReportPayload) => Promise<SubmitBugResult>` | Submit a report. Rejects on failure, but not on a [quota refusal](/quotas) |
 | `submitting` | `boolean` | Whether a submission is in flight |
 | `error` | `Error \| null` | Last submission error |
 | `lastResponse` | `SubmitBugReportResponse \| null` | Last successful response |
-| `reset` | `() => void` | Clear `error` and `lastResponse` |
+| `refusal` | `MiteQuotaRefusal \| null` | Set when the account is over a [plan limit](/quotas) |
+| `reset` | `() => void` | Clear `error`, `lastResponse`, and `refusal` |
 
 ## useReleases
 

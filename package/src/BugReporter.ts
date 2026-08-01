@@ -1,6 +1,12 @@
-import type { SubmitBugReportPayload, SubmitBugReportResponse } from './types'
+import type {
+  MiteQuotaRefusal,
+  SubmitBugReportPayload,
+  SubmitBugReportResponse,
+  SubmitBugResult,
+} from './types'
 import type { ApiClient } from './utils/client'
 import { type FlatStringRecord, normalizeDeviceInfo } from './utils/deviceInfo'
+import { parseQuotaRefusal } from './utils/quota'
 
 interface BugReporterConfig {
   apiClient: ApiClient
@@ -9,6 +15,20 @@ interface BugReporterConfig {
 
 interface SendBugReportOptions {
   includeDefaultDeviceInfo?: boolean
+}
+
+interface UploadedAttachment {
+  storage_id: string
+  file_type?: string
+  file_name?: string
+}
+
+interface AttachmentUploadOutcome {
+  uploaded: UploadedAttachment[]
+  /** Set when the account is out of reports. No report can be created. */
+  reportRefusal?: MiteQuotaRefusal
+  /** Set when the account is out of storage. The report still goes out. */
+  storageRefusal?: MiteQuotaRefusal
 }
 
 export class BugReporter {
@@ -46,36 +66,72 @@ export class BugReporter {
     return result.storageId
   }
 
+  /**
+   * Upload every attachment. The upload URL endpoint can refuse with either
+   * quota code, so branch on the code and not on the endpoint.
+   */
+  private async uploadAttachments(
+    localAttachments: NonNullable<SubmitBugReportPayload['attachments']>,
+  ): Promise<AttachmentUploadOutcome> {
+    const uploaded: UploadedAttachment[] = []
+
+    for (const attachment of localAttachments) {
+      let uploadUrl: string
+
+      try {
+        uploadUrl = await this.getUploadUrl()
+      } catch (err) {
+        const refusal = parseQuotaRefusal(err)
+        if (!refusal) throw err
+
+        // Out of reports. The bug report would be refused as well, so stop
+        // here rather than send a request that cannot succeed.
+        if (refusal.code === 'REPORT_QUOTA_EXCEEDED') {
+          return { uploaded, reportRefusal: refusal }
+        }
+
+        // Out of storage. Storage is a standing total, so the attachments
+        // that are left cannot fit either. The report text is the value the
+        // customer must not lose, so stop uploading and keep going.
+        return { uploaded, storageRefusal: refusal }
+      }
+
+      const storageId = await this.uploadFile(uploadUrl, attachment.uri, attachment.type)
+      uploaded.push({
+        storage_id: storageId,
+        file_type: attachment.type,
+        file_name: attachment.name,
+      })
+    }
+
+    return { uploaded }
+  }
+
   async sendBugReportToServer(
     payload: Omit<SubmitBugReportPayload, 'appId' | 'deviceInfo'>,
     options: SendBugReportOptions = {},
-  ): Promise<SubmitBugReportResponse> {
+  ): Promise<SubmitBugResult> {
     const { attachments: localAttachments, device_info, ...rest } = payload
     const { includeDefaultDeviceInfo = true } = options
 
-    let attachments:
-      | Array<{
-          storage_id: string
-          file_type?: string
-          file_name?: string
-        }>
-      | undefined
+    let attachments: UploadedAttachment[] | undefined
+    let droppedAttachments: { count: number; refusal: MiteQuotaRefusal } | undefined
 
     if (localAttachments && localAttachments.length > 0) {
-      attachments = []
-      for (const attachment of localAttachments) {
-        const uploadUrl = await this.getUploadUrl()
-        const storageId = await this.uploadFile(
-          uploadUrl,
-          attachment.uri,
-          attachment.type,
-        )
-        attachments.push({
-          storage_id: storageId,
-          file_type: attachment.type,
-          file_name: attachment.name,
-        })
+      const outcome = await this.uploadAttachments(localAttachments)
+
+      if (outcome.reportRefusal) {
+        return { ok: false, refusal: outcome.reportRefusal }
       }
+
+      if (outcome.storageRefusal) {
+        droppedAttachments = {
+          count: localAttachments.length - outcome.uploaded.length,
+          refusal: outcome.storageRefusal,
+        }
+      }
+
+      attachments = outcome.uploaded.length > 0 ? outcome.uploaded : undefined
     }
 
     const requestBody: Record<string, unknown> = {
@@ -89,9 +145,20 @@ export class BugReporter {
       requestBody.device_info = normalizeDeviceInfo(this.deviceInfo)
     }
 
-    return this.apiClient.post<SubmitBugReportResponse>(
-      '/api/v1/bug-reports',
-      requestBody,
-    )
+    try {
+      const report = await this.apiClient.post<SubmitBugReportResponse>(
+        '/api/v1/bug-reports',
+        requestBody,
+      )
+
+      return droppedAttachments
+        ? { ok: true, report, droppedAttachments }
+        : { ok: true, report }
+    } catch (err) {
+      const refusal = parseQuotaRefusal(err)
+      if (!refusal) throw err
+
+      return { ok: false, refusal }
+    }
   }
 }

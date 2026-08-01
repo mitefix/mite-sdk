@@ -45,6 +45,12 @@ export interface MiteConfig {
    * @default 20
    */
   maxNavigationBreadcrumbs?: number
+  /**
+   * Called each time the server refuses a request because the account has
+   * reached a plan limit. Use it to log the condition or to tell the user.
+   * The SDK never throws for a quota refusal.
+   */
+  onQuotaExceeded?: (refusal: MiteQuotaRefusal) => void
 }
 
 export interface NavigationBreadcrumb {
@@ -167,6 +173,52 @@ export interface SubmitBugReportResponse {
   id: string
   status: 'NEEDS_TRIAGE'
 }
+
+/**
+ * Plan limits the server enforces. `REPORT_QUOTA_EXCEEDED` means the account
+ * has used every report in the current billing period. `STORAGE_QUOTA_EXCEEDED`
+ * means the account has used all of its attachment storage.
+ */
+export type MiteQuotaCode = 'REPORT_QUOTA_EXCEEDED' | 'STORAGE_QUOTA_EXCEEDED'
+
+export interface MiteQuota {
+  limit: number
+  used: number
+  /**
+   * Milliseconds since the epoch. Sent with `REPORT_QUOTA_EXCEEDED` only.
+   * Attachment storage is a standing total and does not reset.
+   */
+  resetsAt?: number
+}
+
+export interface MiteQuotaRefusal {
+  code: MiteQuotaCode
+  /** The message the server sent. Written for developers, not end users. */
+  message: string
+  quota: MiteQuota
+}
+
+/**
+ * The outcome of a bug report submission.
+ *
+ * `ok: true` means the server created a report. When `droppedAttachments` is
+ * present, the report exists but the files did not upload.
+ * `ok: false` means the server created no report. Read `refusal.code` to know
+ * why. A refusal is an expected state, so the SDK does not throw for it.
+ */
+export type SubmitBugResult =
+  | {
+      ok: true
+      report: SubmitBugReportResponse
+      droppedAttachments?: {
+        count: number
+        refusal: MiteQuotaRefusal
+      }
+    }
+  | {
+      ok: false
+      refusal: MiteQuotaRefusal
+    }
 
 export interface IdentifyUserPayload {
   user_identifier?: string

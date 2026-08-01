@@ -63,6 +63,15 @@ export class ApiClient {
         const config = error.config
         if (!config) return Promise.reject(error)
 
+        // A 4xx is not transient. A retry gives the same answer, so it only
+        // costs battery and delays the error the developer sees. This covers
+        // the 402 plan quota refusals, which cannot change until the plan
+        // changes or the billing period ends.
+        const status = error.response?.status
+        if (typeof status === 'number' && status >= 400 && status < 500) {
+          return Promise.reject(error)
+        }
+
         const retryCount = (config[RETRY_COUNT_HEADER] as number) ?? 0
         if (retryCount >= this.maxRetries) {
           return Promise.reject(error)

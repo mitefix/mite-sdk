@@ -37,15 +37,20 @@ export default function BugReportScreen() {
 `submitBug` rejects when submission fails, and also exposes the failure on
 `error`. Wrap the call in `try`/`catch` if you handle it inline.
 
+A [plan quota refusal](/quotas) is the one exception. It does not reject,
+because it is an expected state and not a fault. It comes back as `ok: false`
+in the result and on `refusal`.
+
 ### Return value
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `submitBug` | `(payload: BugReportPayload) => Promise<SubmitBugReportResponse>` | Submit a report |
+| `submitBug` | `(payload: BugReportPayload) => Promise<SubmitBugResult>` | Submit a report |
 | `submitting` | `boolean` | Whether a submission is in flight |
 | `error` | `Error \| null` | Last submission error |
 | `lastResponse` | `SubmitBugReportResponse \| null` | Response from the last successful submission |
-| `reset` | `() => void` | Clear `error` and `lastResponse` |
+| `refusal` | `MiteQuotaRefusal \| null` | Set when the account is over a [plan limit](/quotas) |
+| `reset` | `() => void` | Clear `error`, `lastResponse`, and `refusal` |
 
 ## Direct API access
 
@@ -56,24 +61,43 @@ import { useMite } from '@usemite/sdk'
 
 const mite = useMite()
 
-const response = await mite.submitBug({
+const result = await mite.submitBug({
   title: 'Navigation broken',
   description: 'Back button does nothing on the settings screen',
 })
 
-console.log(response.id) // e.g. 'bug_abc123'
+if (result.ok) {
+  console.log(result.report.id) // e.g. 'bug_abc123'
+}
 ```
 
-Every successful submission resolves to:
+Every submission resolves to a `SubmitBugResult`:
 
 ```ts
+type SubmitBugResult =
+  | {
+      ok: true
+      report: SubmitBugReportResponse
+      /** Set when the attachments did not fit in the storage quota. */
+      droppedAttachments?: { count: number; refusal: MiteQuotaRefusal }
+    }
+  | { ok: false; refusal: MiteQuotaRefusal }
+
 interface SubmitBugReportResponse {
   id: string
   status: 'NEEDS_TRIAGE'
 }
 ```
 
-New reports always land as `NEEDS_TRIAGE`.
+New reports always land as `NEEDS_TRIAGE`. `ok: false` means the account is over
+a [plan limit](/quotas) and no report was created.
+
+<Callout type="warn">
+  **Changed in 0.3.0.** `submitBug` returned `SubmitBugReportResponse` before.
+  Read `result.report` in place of the old response, after a check on
+  `result.ok`. The `onSubmitted` props of `ShakeToReport` and
+  `StoreReviewPrompt` are unchanged, because they fire only on success.
+</Callout>
 
 ## Payload fields
 

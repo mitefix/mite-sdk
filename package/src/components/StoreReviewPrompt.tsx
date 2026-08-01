@@ -1,7 +1,14 @@
 import { useCallback, useState } from 'react'
 import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 import { useMite } from '../MiteProvider'
-import type { SubmitBugReportResponse } from '../types'
+import type { MiteQuotaRefusal, SubmitBugReportResponse } from '../types'
+
+/**
+ * Default for `quotaMessage`. The server message names the account plan, which
+ * means nothing to the person giving the feedback.
+ */
+const DEFAULT_QUOTA_MESSAGE =
+  'Feedback is not being accepted right now. Please try again later.'
 
 export interface StoreReviewPromptProps {
   /** Controls the visibility of the prompt. */
@@ -38,6 +45,17 @@ export interface StoreReviewPromptProps {
   onNegative?: () => void
   /** Called after feedback from the built-in step was submitted. */
   onFeedbackSubmitted?: (response: SubmitBugReportResponse) => void
+  /**
+   * Called when the account is over a plan limit and the feedback could not
+   * be recorded.
+   */
+  onQuotaExceeded?: (refusal: MiteQuotaRefusal) => void
+  /**
+   * Text shown when the account is out of reports. Do not show
+   * `refusal.message` here — it is written for you, not for your users.
+   * @default 'Feedback is not being accepted right now. Please try again later.'
+   */
+  quotaMessage?: string
 }
 
 type PromptStep = 'ask' | 'feedback'
@@ -62,6 +80,8 @@ export function StoreReviewPrompt({
   onPositive,
   onNegative,
   onFeedbackSubmitted,
+  onQuotaExceeded,
+  quotaMessage = DEFAULT_QUOTA_MESSAGE,
 }: StoreReviewPromptProps) {
   const mite = useMite()
   const [step, setStep] = useState<PromptStep>('ask')
@@ -104,18 +124,37 @@ export function StoreReviewPrompt({
     setError(null)
 
     try {
-      const response = await mite.submitBug({
+      const result = await mite.submitBug({
         title: feedbackReportTitle,
         description,
       })
+
+      if (!result.ok) {
+        // Keep the text the user wrote on screen. A retry cannot succeed, so
+        // the message does not ask for one.
+        setError(quotaMessage)
+        setSubmitting(false)
+        onQuotaExceeded?.(result.refusal)
+        return
+      }
+
       handleClose()
-      onFeedbackSubmitted?.(response)
+      onFeedbackSubmitted?.(result.report)
     } catch (err) {
       console.warn('[Mite] Failed to submit store review prompt feedback:', err)
       setError('Something went wrong. Please try again.')
       setSubmitting(false)
     }
-  }, [feedback, feedbackReportTitle, handleClose, mite, onFeedbackSubmitted, submitting])
+  }, [
+    feedback,
+    feedbackReportTitle,
+    handleClose,
+    mite,
+    onFeedbackSubmitted,
+    onQuotaExceeded,
+    quotaMessage,
+    submitting,
+  ])
 
   return (
     <Modal

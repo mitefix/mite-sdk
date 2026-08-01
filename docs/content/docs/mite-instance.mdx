@@ -39,11 +39,15 @@ instance uninitialized. `init()` can be called again afterward.
 
 ## Bug reports
 
-### `submitBug(payload): Promise<SubmitBugReportResponse>`
+### `submitBug(payload): Promise<SubmitBugResult>`
 
 Submit a bug report. Enriches the payload with the current identity, device
 info, and the [navigation trail](/navigation-breadcrumbs), uploads any
 attachments, and posts the report.
+
+Check `result.ok` before you read `result.report`. A `false` value means the
+account is over a [plan limit](/quotas) and no report was created. A quota
+refusal does not throw.
 
 On a network failure with the queue enabled, the report is queued **and the
 error is re-thrown**. See [Bug Reports](/bug-reports).

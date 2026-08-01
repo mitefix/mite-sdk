@@ -83,7 +83,7 @@ export default function ReportScreen() {
     }
 
     try {
-      await submitBug({
+      const result = await submitBug({
         title: title.trim(),
         description: description.trim(),
         steps_to_reproduce: stepsToReproduce.trim() || undefined,
@@ -91,6 +91,25 @@ export default function ReportScreen() {
         actual_behavior: actualBehavior.trim() || undefined,
         attachments: attachments.length > 0 ? attachments : undefined,
       })
+
+      // The account is over a plan limit. No report exists, and a retry
+      // cannot change that, so keep the form as the user left it.
+      if (!result.ok) {
+        Alert.alert(
+          'Report not accepted',
+          'This app has reached its report limit. Please try again later.',
+        )
+        return
+      }
+
+      // The report exists, but its files did not fit in the storage quota.
+      if (result.droppedAttachments) {
+        Alert.alert(
+          'Attachments not saved',
+          `${result.droppedAttachments.count} file(s) could not be uploaded. The report was sent without them.`,
+        )
+      }
+
       Alert.alert('Bug reported!', 'Your report has been submitted.', [
         {
           text: 'OK',

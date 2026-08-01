@@ -77,6 +77,37 @@ describe('ApiClient', () => {
     expect(mockAxios.interceptors.response.use).toHaveBeenCalledTimes(1)
   })
 
+  describe('retry interceptor', () => {
+    // The retry handler is registered before the error logging handler.
+    function getRetryHandler() {
+      return mockAxios.interceptors.response.use.mock.calls[0][1]
+    }
+
+    it('does not retry a 402 plan quota refusal', async () => {
+      new ApiClient({ maxRetries: 3 })
+      const config: Record<string, unknown> = { url: '/api/v1/bug-reports' }
+      const error = {
+        config,
+        response: {
+          status: 402,
+          data: { code: 'REPORT_QUOTA_EXCEEDED', quota: { limit: 50, used: 50 } },
+        },
+      }
+
+      await expect(getRetryHandler()(error)).rejects.toBe(error)
+      expect(config.__mite_retry_count).toBeUndefined()
+    })
+
+    it('does not retry any other 4xx response', async () => {
+      new ApiClient({ maxRetries: 3 })
+      const config: Record<string, unknown> = { url: '/api/v1/bug-reports' }
+      const error = { config, response: { status: 401, data: {} } }
+
+      await expect(getRetryHandler()(error)).rejects.toBe(error)
+      expect(config.__mite_retry_count).toBeUndefined()
+    })
+  })
+
   describe('HTTP methods', () => {
     it('get returns response data', async () => {
       mockAxios.get.mockResolvedValueOnce({ data: { ok: true } })

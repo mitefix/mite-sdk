@@ -48,6 +48,8 @@ submit. Mount once. See [In-App Bug Reporting](/shake-to-report).
 | `shakeOptions` | `ShakeDetectorOptions` | — | Sensitivity and timing overrides |
 | `onSubmitted` | `(response: SubmitBugReportResponse) => void` | — | Successful submission |
 | `onError` | `(error: Error) => void` | — | Submission failure |
+| `onQuotaExceeded` | `(refusal: MiteQuotaRefusal) => void` | — | Account over a [plan limit](/quotas) |
+| `quotaMessage` | `string` | `'Reports are not being accepted right now. Please try again later.'` | Text shown to the user on a refusal |
 
 ## ScreenshotAnnotator
 
@@ -131,5 +133,7 @@ Asks "Enjoying the app?" and routes the answer. See
 | `onPositive` | `(reviewRequested: boolean) => void` | — |
 | `onNegative` | `() => void` | — |
 | `onFeedbackSubmitted` | `(response: SubmitBugReportResponse) => void` | — |
+| `onQuotaExceeded` | `(refusal: MiteQuotaRefusal) => void` | — |
+| `quotaMessage` | `string` | `'Feedback is not being accepted right now. Please try again later.'` |
 
 Providing `onNegative` skips the built-in feedback step.
