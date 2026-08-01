@@ -132,9 +132,14 @@ serves from its local gate without a request.
   request is refused with `REPORT_QUOTA_EXCEEDED`, the SDK stops there, because
   the report would be refused too.
 
-After a `REPORT_QUOTA_EXCEEDED`, the SDK holds the refusal in memory and answers
-later `submitBug` calls itself until `resetsAt` passes. The gate is not saved to
-disk, so a restart of the app costs at most one more request.
+After a `REPORT_QUOTA_EXCEEDED` that carries a `resetsAt`, the SDK holds the
+refusal in memory and answers later `submitBug` calls itself until that time
+passes. A refusal with no `resetsAt` does not close the gate, because the SDK
+cannot know when to open it again. The gate is not saved to disk, so a restart
+of the app costs at most one more request.
+
+A refusal that a queued request meets during a flush closes the gate and calls
+`onQuotaExceeded` in the same way.
 
 ## Components
 

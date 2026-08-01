@@ -132,7 +132,13 @@ export class Mite {
     const enableOfflineQueue = this.config.enableOfflineQueue !== false
 
     if (enableOfflineQueue) {
-      this.offlineQueue = new OfflineQueue(this.apiClient)
+      this.offlineQueue = new OfflineQueue(this.apiClient, undefined, refusal => {
+        // A queued report can meet a quota refusal long after the call that
+        // created it returned. Report it through the same channel, and close
+        // the gate so the next call sends nothing that cannot succeed.
+        this.rememberReportQuotaRefusal(refusal)
+        this.notifyQuotaExceeded(refusal)
+      })
       console.log('[Mite] Offline queue enabled')
     }
 
@@ -196,9 +202,7 @@ export class Mite {
       })
 
       if (!result.ok) {
-        if (result.refusal.code === 'REPORT_QUOTA_EXCEEDED') {
-          this.reportQuotaRefusal = result.refusal
-        }
+        this.rememberReportQuotaRefusal(result.refusal)
         this.notifyQuotaExceeded(result.refusal)
       } else if (result.droppedAttachments) {
         console.warn(
@@ -515,6 +519,18 @@ export class Mite {
   }
 
   /**
+   * Close the gate, but only when the refusal says when it should open again.
+   * The gate saves a request that cannot succeed. It must never be the reason
+   * a report is lost, so a refusal with no reset time does not close it.
+   */
+  private rememberReportQuotaRefusal(refusal: MiteQuotaRefusal): void {
+    if (refusal.code !== 'REPORT_QUOTA_EXCEEDED') return
+    if (typeof refusal.quota.resetsAt !== 'number') return
+
+    this.reportQuotaRefusal = refusal
+  }
+
+  /**
    * The report quota refusal that is still in force, if any. The gate opens
    * again once the billing period turns over.
    */
@@ -523,7 +539,7 @@ export class Mite {
     if (!refusal) return null
 
     const resetsAt = refusal.quota.resetsAt
-    if (typeof resetsAt === 'number' && Date.now() >= resetsAt) {
+    if (typeof resetsAt !== 'number' || Date.now() >= resetsAt) {
       this.reportQuotaRefusal = null
       return null
     }

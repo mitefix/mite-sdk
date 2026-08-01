@@ -45,6 +45,9 @@ export function useBugReport(): UseBugReportResult {
             setRefusal(result.droppedAttachments.refusal)
           }
         } else {
+          // No report exists. A stale `lastResponse` from an earlier success
+          // would read as "the report went out, only its files were dropped".
+          setLastResponse(null)
           setRefusal(result.refusal)
         }
 

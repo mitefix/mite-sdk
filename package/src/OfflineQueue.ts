@@ -1,3 +1,4 @@
+import type { MiteQuotaRefusal } from './types'
 import type { ApiClient } from './utils/client'
 import { parseQuotaRefusal } from './utils/quota'
 
@@ -25,10 +26,21 @@ export class OfflineQueue {
   private apiClient: ApiClient
   private maxRetries: number
   private flushPromise: Promise<void> | null = null
+  private onQuotaRefusal?: (refusal: MiteQuotaRefusal) => void
 
-  constructor(apiClient: ApiClient, maxRetries = 5) {
+  /**
+   * @param onQuotaRefusal Called when a queued request is dropped because the
+   * account is over a plan limit. The queue itself does not act on a refusal,
+   * so the owner decides what to report and what to remember.
+   */
+  constructor(
+    apiClient: ApiClient,
+    maxRetries = 5,
+    onQuotaRefusal?: (refusal: MiteQuotaRefusal) => void,
+  ) {
     this.apiClient = apiClient
     this.maxRetries = maxRetries
+    this.onQuotaRefusal = onQuotaRefusal
   }
 
   /**
@@ -93,6 +105,11 @@ export class OfflineQueue {
           console.warn(
             `[Mite] Dropping queued request to ${item.url}: ${refusal.message}`,
           )
+          try {
+            this.onQuotaRefusal?.(refusal)
+          } catch (handlerErr) {
+            console.error('[Mite] Quota refusal handler threw:', handlerErr)
+          }
           continue
         }
 

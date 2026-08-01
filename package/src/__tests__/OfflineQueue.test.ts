@@ -101,6 +101,59 @@ describe('OfflineQueue', () => {
     consoleWarnSpy.mockRestore()
   })
 
+  it('reports a dropped quota refusal to its owner', async () => {
+    const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation()
+    const postFn = jest.fn().mockRejectedValue({
+      isAxiosError: true,
+      response: {
+        status: 402,
+        data: {
+          error: 'This account has used all 50 reports.',
+          code: 'REPORT_QUOTA_EXCEEDED',
+          quota: { limit: 50, used: 50, resets_at: 1785000000000 },
+        },
+      },
+    })
+    const onQuotaRefusal = jest.fn()
+    const queue = new OfflineQueue(createMockApiClient(postFn), 5, onQuotaRefusal)
+
+    queue.enqueue('post', '/api/v1/bug-reports', { title: 'test' })
+    await queue.flush()
+
+    expect(onQuotaRefusal).toHaveBeenCalledTimes(1)
+    expect(onQuotaRefusal).toHaveBeenCalledWith(
+      expect.objectContaining({
+        code: 'REPORT_QUOTA_EXCEEDED',
+        quota: { limit: 50, used: 50, resetsAt: 1785000000000 },
+      }),
+    )
+
+    queue.destroy()
+    consoleWarnSpy.mockRestore()
+  })
+
+  it('keeps draining when the quota refusal handler throws', async () => {
+    const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation()
+    const postFn = jest.fn().mockRejectedValue({
+      isAxiosError: true,
+      response: {
+        status: 402,
+        data: { code: 'REPORT_QUOTA_EXCEEDED', quota: { limit: 50, used: 50 } },
+      },
+    })
+    const queue = new OfflineQueue(createMockApiClient(postFn), 5, () => {
+      throw new Error('handler is broken')
+    })
+
+    queue.enqueue('post', '/api/v1/bug-reports', { title: 'test' })
+    await expect(queue.flush()).resolves.toBeUndefined()
+
+    expect(queue.pendingCount).toBe(0)
+
+    queue.destroy()
+    consoleWarnSpy.mockRestore()
+  })
+
   it('handles put requests', async () => {
     const putFn = jest.fn().mockResolvedValue({})
     const client = createMockApiClient(undefined, putFn)

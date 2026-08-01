@@ -1117,6 +1117,31 @@ describe('Mite', () => {
       )
     })
 
+    it('keeps sending when the refusal carries no reset time', async () => {
+      const noResetRefusal = {
+        isAxiosError: true,
+        response: {
+          status: 402,
+          data: {
+            error: 'This account has used all of its reports.',
+            code: 'REPORT_QUOTA_EXCEEDED',
+            quota: { limit: 50, used: 50 },
+          },
+        },
+      }
+      mockAxios.post
+        .mockRejectedValueOnce(noResetRefusal)
+        .mockResolvedValueOnce({ data: { id: 'bug-3', status: 'OPEN' } })
+
+      const mite = new Mite({ apiKey: 'test' })
+      await mite.submitBug({ title: 'a', description: 'b' })
+      const second = await mite.submitBug({ title: 'c', description: 'd' })
+
+      // Without a reset time the SDK cannot know when to open the gate again,
+      // so it must not close it. One wasted request beats a lost report.
+      expect(second).toEqual({ ok: true, report: { id: 'bug-3', status: 'OPEN' } })
+    })
+
     it('keeps working when the onQuotaExceeded handler throws', async () => {
       mockAxios.post.mockRejectedValueOnce(REPORT_REFUSAL)
 

@@ -1,4 +1,4 @@
-import { isQuotaRefusal, parseQuotaRefusal } from '../utils/quota'
+import { parseQuotaRefusal } from '../utils/quota'
 
 function quotaError(status: number, data: unknown) {
   return { isAxiosError: true, response: { status, data } }
@@ -61,12 +61,5 @@ describe('parseQuotaRefusal', () => {
 
     expect(refusal?.message).toBe('This account has reached a plan limit.')
     expect(refusal?.quota).toEqual({ limit: 0, used: 0 })
-  })
-})
-
-describe('isQuotaRefusal', () => {
-  it('is true only for a recognised refusal', () => {
-    expect(isQuotaRefusal(quotaError(402, { code: 'REPORT_QUOTA_EXCEEDED' }))).toBe(true)
-    expect(isQuotaRefusal(quotaError(500, {}))).toBe(false)
   })
 })

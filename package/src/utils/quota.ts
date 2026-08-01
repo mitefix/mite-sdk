@@ -54,12 +54,3 @@ export function parseQuotaRefusal(err: unknown): MiteQuotaRefusal | null {
     quota,
   }
 }
-
-/**
- * True when the error is a plan quota refusal. Use it where the caller must
- * recognise a refusal but does not act on its contents, such as the retry
- * guards.
- */
-export function isQuotaRefusal(err: unknown): boolean {
-  return parseQuotaRefusal(err) !== null
-}
