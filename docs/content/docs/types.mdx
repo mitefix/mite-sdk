@@ -260,6 +260,83 @@ interface UseWhatsNewResult {
 }
 ```
 
+## Announcements
+
+### Announcement
+
+```ts
+interface Announcement {
+  id: string
+  title: string
+  content: string // markdown
+  platform: ReleasePlatform
+  ctaLabel?: string
+  ctaUrl?: string
+  publishedAt?: number
+  updatedAt?: number
+  createdAt: number
+}
+```
+
+### AnnouncementsResponse
+
+```ts
+interface AnnouncementsResponse {
+  announcements: Announcement[]
+}
+```
+
+### GetAnnouncementsOptions
+
+```ts
+interface GetAnnouncementsOptions {
+  platform?: ReleasePlatform
+  limit?: number
+}
+```
+
+### UseAnnouncementsOptions
+
+```ts
+interface UseAnnouncementsOptions extends GetAnnouncementsOptions {
+  enabled?: boolean // default: false
+}
+```
+
+### UseAnnouncementsResult
+
+```ts
+interface UseAnnouncementsResult {
+  announcements: Announcement[]
+  loading: boolean
+  error: Error | null
+  refetch: () => Promise<void>
+}
+```
+
+### UseAnnouncementPopupOptions
+
+```ts
+interface UseAnnouncementPopupOptions {
+  platform?: ReleasePlatform
+  limit?: number // default: 10
+  enabled?: boolean // default: true
+}
+```
+
+### UseAnnouncementPopupResult
+
+```ts
+interface UseAnnouncementPopupResult {
+  visible: boolean
+  announcement: Announcement | null
+  loading: boolean
+  error: Error | null
+  show: () => void
+  dismiss: () => Promise<void>
+}
+```
+
 ## Feature requests
 
 ### FeatureRequest

@@ -3,10 +3,13 @@ import { BugReporter } from './BugReporter'
 import { navigationTracker } from './NavigationTracker'
 import { OfflineQueue } from './OfflineQueue'
 import type {
+  Announcement,
+  AnnouncementsResponse,
   CreateFeatureRequestPayload,
   CreateFeatureRequestResponse,
   FeatureRequest,
   FeatureRequestVotesResponse,
+  GetAnnouncementsOptions,
   GetReleasesOptions,
   IdentifyUserPayload,
   IdentifyUserResponse,
@@ -28,6 +31,10 @@ import { isStoreReviewAvailable, requestStoreReview } from './utils/storeReview'
 
 const IDENTITY_STORAGE_KEY = '@mite/sdk-identity'
 const LAST_SEEN_RELEASE_STORAGE_KEY = '@mite/sdk-last-seen-release'
+const SEEN_ANNOUNCEMENTS_STORAGE_KEY = '@mite/sdk-seen-announcements'
+// Announcements are ephemeral, so the seen list only needs to cover the
+// recent past. The cap keeps the stored JSON from growing forever.
+const MAX_SEEN_ANNOUNCEMENT_IDS = 100
 
 interface PersistedIdentityState {
   anonymousId: string
@@ -333,6 +340,83 @@ export class Mite {
     })
 
     return response.releases
+  }
+
+  /**
+   * Fetch currently active announcements for the application, newest first.
+   * Only published announcements inside their schedule window are returned.
+   */
+  async getAnnouncements(options: GetAnnouncementsOptions = {}): Promise<Announcement[]> {
+    const apiKey = this.requireApiKey('fetch announcements')
+
+    const params = new URLSearchParams()
+    if (options.platform) {
+      params.append('platform', options.platform)
+    }
+    if (options.limit) {
+      params.append('limit', options.limit.toString())
+    }
+
+    const queryString = params.toString()
+    const url = `/api/v1/announcements${queryString ? `?${queryString}` : ''}`
+
+    const response = await this.apiClient.get<AnnouncementsResponse>(url, {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+      },
+    })
+
+    return response.announcements
+  }
+
+  /**
+   * Get the ids of announcements this device has already seen.
+   * Returns an empty list when nothing has been seen or storage fails.
+   */
+  async getSeenAnnouncementIds(): Promise<string[]> {
+    try {
+      const raw = await this.identityStorage.getItem(SEEN_ANNOUNCEMENTS_STORAGE_KEY)
+      if (!raw) {
+        return []
+      }
+      const parsed: unknown = JSON.parse(raw)
+      if (!Array.isArray(parsed)) {
+        return []
+      }
+      return parsed.filter((id): id is string => typeof id === 'string')
+    } catch {
+      return []
+    }
+  }
+
+  /**
+   * Persist an announcement id as seen so it is not shown again on this device.
+   */
+  async markAnnouncementSeen(id: string): Promise<void> {
+    try {
+      const seen = await this.getSeenAnnouncementIds()
+      if (seen.includes(id)) {
+        return
+      }
+      const next = [...seen, id].slice(-MAX_SEEN_ANNOUNCEMENT_IDS)
+      await this.identityStorage.setItem(
+        SEEN_ANNOUNCEMENTS_STORAGE_KEY,
+        JSON.stringify(next),
+      )
+    } catch {
+      console.warn('[Mite] Failed to persist the seen announcements')
+    }
+  }
+
+  /**
+   * Forget every seen announcement, so active announcements show again.
+   */
+  async clearSeenAnnouncements(): Promise<void> {
+    try {
+      await this.identityStorage.removeItem(SEEN_ANNOUNCEMENTS_STORAGE_KEY)
+    } catch {
+      console.warn('[Mite] Failed to clear the seen announcements')
+    }
   }
 
   /**

@@ -1,7 +1,13 @@
 import { ThemedText } from '@/components/ThemedText'
 import { ThemedView } from '@/components/ThemedView'
 import { useThemeColor } from '@/hooks/useThemeColor'
-import { type Release, WhatsNew, showWhatsNew, useReleases } from '@usemite/sdk'
+import {
+  type Release,
+  WhatsNew,
+  showAnnouncement,
+  showWhatsNew,
+  useReleases,
+} from '@usemite/sdk'
 import {
   ActivityIndicator,
   ScrollView,
@@ -86,6 +92,14 @@ export default function ReleasesScreen() {
             >
               <ThemedText style={styles.refreshText} lightColor="#fff" darkColor="#fff">
                 What's New
+              </ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.refreshButton, { backgroundColor: tintColor }]}
+              onPress={() => showAnnouncement()}
+            >
+              <ThemedText style={styles.refreshText} lightColor="#fff" darkColor="#fff">
+                News
               </ThemedText>
             </TouchableOpacity>
             <TouchableOpacity

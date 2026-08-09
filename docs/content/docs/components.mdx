@@ -13,6 +13,7 @@ styling and need no configuration to work.
 | [`ShakeToReport`](#shaketoreport) | Full in-app bug reporting flow |
 | [`ScreenshotAnnotator`](#screenshotannotator) | Draw on and redact an image |
 | [`WhatsNew`](#whatsnew) | Release notes after an update |
+| [`AnnouncementPopup`](#announcementpopup) | Show-once announcement popup |
 | [`FeatureRequestsSheet`](#featurerequestssheet) | Feature request board |
 | [`StoreReviewPrompt`](#storereviewprompt) | Review deflection prompt |
 
@@ -87,6 +88,25 @@ Accepts every [`useWhatsNew` option](/hooks#usewhatsnew) plus:
 | `onDismiss` | `() => void` | — | Called after dismissal |
 
 Follows the system color scheme. Open it imperatively with `showWhatsNew()`.
+
+## AnnouncementPopup
+
+Shows the latest active announcement once per device. Mount once. See
+[Announcements](/announcements).
+
+```tsx
+<AnnouncementPopup onCtaPress={url => track('announcement_cta', { url })} />
+```
+
+Accepts every [`useAnnouncementPopup` option](/hooks#useannouncementpopup) plus:
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `dismissLabel` | `string` | `'Got it'` | Dismiss button label |
+| `onDismiss` | `() => void` | — | Called after dismissal |
+| `onCtaPress` | `(url: string) => void` | — | Called before the action URL opens |
+
+Follows the system color scheme. Open it imperatively with `showAnnouncement()`.
 
 ## FeatureRequestsSheet
 

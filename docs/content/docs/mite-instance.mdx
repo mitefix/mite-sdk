@@ -102,6 +102,29 @@ Resolves to `null` when nothing has been seen or storage fails.
 Record a version as seen. Logs a `[Mite]` warning on failure rather than
 throwing.
 
+## Announcements
+
+See [Announcements](/announcements).
+
+### `getAnnouncements(options?): Promise<Announcement[]>`
+
+Fetch the currently active announcements, newest first. Both `platform` and
+`limit` are optional; omitted options are left out of the query string.
+
+### `getSeenAnnouncementIds(): Promise<string[]>`
+
+IDs of announcements this device has dismissed. Resolves to an empty list when
+nothing has been seen or storage fails.
+
+### `markAnnouncementSeen(id): Promise<void>`
+
+Record an announcement as seen. Logs a `[Mite]` warning on failure rather than
+throwing. The stored list is capped at the 100 most recent ids.
+
+### `clearSeenAnnouncements(): Promise<void>`
+
+Forget every seen announcement, so active announcements show again.
+
 ## Feature requests
 
 See [Feature Requests](/feature-requests).

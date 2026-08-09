@@ -6,6 +6,7 @@ import { useEffect } from 'react'
 import 'react-native-reanimated'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import {
+  AnnouncementPopup,
   Mite,
   MiteProvider,
   ShakeToReport,
@@ -44,6 +45,7 @@ export default function RootLayout() {
         <Stack.Screen name="+not-found" />
       </Stack>
       <ShakeToReport showFloatingButton />
+      <AnnouncementPopup />
       <StatusBar style="auto" />
     </MiteProvider>
   )
