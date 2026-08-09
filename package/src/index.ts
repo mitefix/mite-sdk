@@ -6,11 +6,14 @@ import {
   recordNavigationBreadcrumb,
 } from './NavigationTracker'
 import { ShakeDetector } from './ShakeDetector'
+import { AnnouncementPopup, showAnnouncement } from './components/AnnouncementPopup'
 import { FeatureRequestsSheet } from './components/FeatureRequestsSheet'
 import { ScreenshotAnnotator } from './components/ScreenshotAnnotator'
 import { ShakeToReport } from './components/ShakeToReport'
 import { StoreReviewPrompt } from './components/StoreReviewPrompt'
 import { WhatsNew, showWhatsNew } from './components/WhatsNew'
+import { useAnnouncementPopup } from './useAnnouncementPopup'
+import { useAnnouncements } from './useAnnouncements'
 import { useBugReport } from './useBugReport'
 import { useFeatureRequests } from './useFeatureRequests'
 import { useMiteNavigationTracking } from './useMiteNavigationTracking'
@@ -18,6 +21,7 @@ import { useReleases } from './useReleases'
 import { useWhatsNew } from './useWhatsNew'
 
 export {
+  AnnouncementPopup,
   clearNavigationTrail,
   FeatureRequestsSheet,
   getNavigationTrail,
@@ -27,8 +31,11 @@ export {
   ScreenshotAnnotator,
   ShakeDetector,
   ShakeToReport,
+  showAnnouncement,
   showWhatsNew,
   StoreReviewPrompt,
+  useAnnouncementPopup,
+  useAnnouncements,
   useBugReport,
   useFeatureRequests,
   useMite,
@@ -38,6 +45,9 @@ export {
   WhatsNew,
 }
 export type {
+  Announcement,
+  AnnouncementsResponse,
+  GetAnnouncementsOptions,
   CreateFeatureRequestPayload,
   CreateFeatureRequestResponse,
   FeatureRequest,
@@ -68,6 +78,15 @@ export type {
   UseFeatureRequestsOptions,
   UseFeatureRequestsResult,
 } from './useFeatureRequests'
+export type {
+  UseAnnouncementsOptions,
+  UseAnnouncementsResult,
+} from './useAnnouncements'
+export type {
+  UseAnnouncementPopupOptions,
+  UseAnnouncementPopupResult,
+} from './useAnnouncementPopup'
+export type { AnnouncementPopupProps } from './components/AnnouncementPopup'
 export type { UseReleasesOptions, UseReleasesResult } from './useReleases'
 export type { ScreenshotAnnotatorProps } from './components/ScreenshotAnnotator'
 export type { ShakeToReportProps } from './components/ShakeToReport'

@@ -80,6 +80,30 @@ export interface GetReleasesOptions {
   limit?: number
 }
 
+export interface Announcement {
+  id: string
+  title: string
+  /** Markdown body. Content can change server-side at any time. */
+  content: string
+  platform: ReleasePlatform
+  /** Label of the optional action button. */
+  ctaLabel?: string
+  /** URL opened by the optional action button. */
+  ctaUrl?: string
+  publishedAt?: number
+  updatedAt?: number
+  createdAt: number
+}
+
+export interface AnnouncementsResponse {
+  announcements: Announcement[]
+}
+
+export interface GetAnnouncementsOptions {
+  platform?: ReleasePlatform
+  limit?: number
+}
+
 export interface FeatureRequest {
   id: string
   title: string

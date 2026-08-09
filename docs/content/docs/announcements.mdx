@@ -1,0 +1,159 @@
+---
+title: Announcements
+description: Push dynamic in-app announcements to your users, no release needed.
+---
+
+`AnnouncementPopup` shows the latest announcement published from the Mite
+dashboard. Unlike [release notes](/whats-new), announcements are not tied to an
+app version: you can publish, edit, schedule, and expire them remotely at any
+time, and the change reaches your users on their next app launch — no build, no
+store review.
+
+```tsx
+import { MiteProvider, AnnouncementPopup } from '@usemite/sdk'
+
+export default function RootLayout() {
+  return (
+    <MiteProvider miteInstance={mite}>
+      {/* Your app */}
+      <AnnouncementPopup />
+    </MiteProvider>
+  )
+}
+```
+
+Mount it once inside `MiteProvider`. It renders a centered popup only when
+there is an active announcement the device has not seen yet.
+
+## How it works
+
+On mount the SDK fetches the currently **active** announcements for the current
+platform — published, and inside their optional start/end window. The most
+recent one is shown automatically if its id is not in the device's seen list.
+Dismissing the popup records the id, so each announcement shows exactly once
+per device.
+
+Only the latest active announcement pops up automatically. Older unseen
+announcements never appear on their own, so a returning user is not flooded
+with a backlog.
+
+Seen ids are stored under `@mite/sdk-seen-announcements`, using the same
+[`identityStorage`](/identity#persisting-the-anonymous-id) as identity state.
+Without persistent storage the seen state resets on reload and the popup
+reappears.
+
+## Editing after publishing
+
+Announcement content stays editable after publishing, and the SDK renders
+whatever the server returns. Note that the seen state is tracked by
+announcement id: editing an announcement does **not** re-show it to users who
+already dismissed it. To reach everyone again, publish a new announcement.
+
+## Scheduling
+
+Set **Starts at** / **Ends at** on the dashboard to control delivery without
+touching the announcement afterwards. Outside the window the announcement is
+excluded from the API response entirely, so expired announcements can never
+pop up late on a device that was offline.
+
+## Action button
+
+Give an announcement a **Button label** and **Button URL** on the dashboard and
+the popup renders an action button that opens the URL (deep links work too).
+Intercept the press with `onCtaPress` if you want to track it.
+
+## Showing it again on demand
+
+Let users re-read the latest announcement from your own UI:
+
+```tsx
+import { showAnnouncement } from '@usemite/sdk'
+
+<Button title="Latest announcement" onPress={showAnnouncement} />
+```
+
+This shows the latest active announcement even when it was already seen. It
+requires a mounted `<AnnouncementPopup />` — it logs a `[Mite]` warning and
+no-ops otherwise.
+
+## Props
+
+`AnnouncementPopup` accepts every [`useAnnouncementPopup` option](#hook-options)
+plus:
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `dismissLabel` | `string` | `'Got it'` | Dismiss button label |
+| `onDismiss` | `() => void` | — | Called after dismissal and after the announcement is marked seen |
+| `onCtaPress` | `(url: string) => void` | — | Called when the action button is pressed, before the URL opens |
+
+The popup follows the system color scheme automatically.
+
+## Custom UI
+
+Use `useAnnouncementPopup` to render your own:
+
+```tsx
+import { useAnnouncementPopup } from '@usemite/sdk'
+
+function AnnouncementBanner() {
+  const { visible, announcement, dismiss } = useAnnouncementPopup()
+
+  if (!visible || !announcement) return null
+
+  return (
+    <Banner onClose={dismiss}>
+      <Text>{announcement.title}</Text>
+      <Text>{announcement.content}</Text>
+    </Banner>
+  )
+}
+```
+
+### Hook options
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `platform` | `'ios' \| 'android' \| 'all'` | current `Platform.OS` | Announcement platform to fetch for |
+| `limit` | `number` | `10` | Max announcements fetched |
+| `enabled` | `boolean` | `true` | Enable the automatic show-once behavior |
+
+### Hook return value
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `visible` | `boolean` | Whether the announcement should be displayed right now |
+| `announcement` | `Announcement \| null` | The latest active announcement |
+| `loading` | `boolean` | Whether announcements are being fetched |
+| `error` | `Error \| null` | Fetch error, if any |
+| `show` | `() => void` | Show the latest announcement even when seen |
+| `dismiss` | `() => Promise<void>` | Hide and mark the announcement as seen |
+
+Announcement bodies render through the same
+[markdown subset](/whats-new#supported-markdown) as release notes.
+
+## Fetching announcements directly
+
+```ts
+const announcements = await mite.getAnnouncements({ platform: 'ios', limit: 5 })
+```
+
+Or with the plain fetch hook (no seen tracking, `enabled` defaults to `false`
+like [`useReleases`](/releases)):
+
+```tsx
+const { announcements, loading, error, refetch } = useAnnouncements({
+  enabled: true,
+})
+```
+
+## Managing the seen state
+
+```ts
+const seen = await mite.getSeenAnnouncementIds() // string[]
+await mite.markAnnouncementSeen(id)
+await mite.clearSeenAnnouncements()
+```
+
+`clearSeenAnnouncements` is handy in a debug menu: the latest active
+announcement pops up again on the next launch.

@@ -11,13 +11,16 @@ Every hook must be called inside a [`MiteProvider`](/#1-initialize-mite).
 | [`useBugReport`](#usebugreport) | Submit bug reports |
 | [`useReleases`](#usereleases) | Fetch published releases |
 | [`useWhatsNew`](#usewhatsnew) | Once-per-version release notes |
+| [`useAnnouncements`](#useannouncements) | Fetch active announcements |
+| [`useAnnouncementPopup`](#useannouncementpopup) | Show-once announcement popup |
 | [`useFeatureRequests`](#usefeaturerequests) | Board, voting, and submissions |
 | [`useMiteNavigationTracking`](#usemitenavigationtracking) | Record screens for bug reports |
 
 <Callout type="warn">
   `enabled` is **not** consistent across hooks. It defaults to `false` on
-  `useReleases` and `useFeatureRequests` (opt in to fetching) but `true` on
-  `useWhatsNew` (opt out of the automatic behavior).
+  `useReleases`, `useAnnouncements`, and `useFeatureRequests` (opt in to
+  fetching) but `true` on `useWhatsNew` and `useAnnouncementPopup` (opt out of
+  the automatic behavior).
 </Callout>
 
 ## useMite
@@ -108,6 +111,62 @@ const { visible, releases, currentVersion, loading, error, show, dismiss } =
 | `show` | `() => void` | Show regardless of last-seen version |
 | `dismiss` | `() => Promise<void>` | Hide and mark the version seen |
 
+## useAnnouncements
+
+Fetch the currently active announcements, newest first. See
+[Announcements](/announcements).
+
+```ts
+const { announcements, loading, error, refetch } = useAnnouncements({
+  enabled: true,
+})
+```
+
+### Options
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `platform` | `'ios' \| 'android' \| 'all'` | unset | Filter by platform |
+| `limit` | `number` | unset | Max number of announcements |
+| `enabled` | `boolean` | `false` | Fetch on mount and when options change |
+
+### Return value
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `announcements` | `Announcement[]` | Fetched announcements |
+| `loading` | `boolean` | Whether a fetch is in flight |
+| `error` | `Error \| null` | Fetch error |
+| `refetch` | `() => Promise<void>` | Fetch again. Never rejects |
+
+## useAnnouncementPopup
+
+Drive a custom announcement UI. See [Announcements](/announcements).
+
+```ts
+const { visible, announcement, loading, error, show, dismiss } =
+  useAnnouncementPopup()
+```
+
+### Options
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `platform` | `'ios' \| 'android' \| 'all'` | current `Platform.OS` | Announcement platform |
+| `limit` | `number` | `10` | Max announcements fetched |
+| `enabled` | `boolean` | `true` | Enable automatic show-once behavior |
+
+### Return value
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `visible` | `boolean` | Whether the announcement should show now |
+| `announcement` | `Announcement \| null` | The latest active announcement |
+| `loading` | `boolean` | Whether announcements are being fetched |
+| `error` | `Error \| null` | Fetch error |
+| `show` | `() => void` | Show the latest announcement even when seen |
+| `dismiss` | `() => Promise<void>` | Hide and mark the announcement seen |
+
 ## useFeatureRequests
 
 Board, voting, and submissions. See [Feature Requests](/feature-requests).
@@ -171,3 +230,4 @@ These are plain functions, usable outside React:
 | `getNavigationTrail()` | Get a copy of the trail, oldest first |
 | `clearNavigationTrail()` | Clear all breadcrumbs |
 | `showWhatsNew()` | Open a mounted [`WhatsNew`](/whats-new) sheet |
+| `showAnnouncement()` | Open a mounted [`AnnouncementPopup`](/announcements) |
