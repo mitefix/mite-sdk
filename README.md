@@ -1,91 +1,42 @@
-# Mite SDK
+<h1 align="center">Mite SDK</h1>
 
-A React Native SDK for bug reporting, release management, and feature requests.
+<p align="center">
+  Bug reporting, release management, and feature requests for React Native apps.
+</p>
 
-**📚 Full documentation: [docs.usemite.com](https://docs.usemite.com)**
+<p align="center">
+  <a href="https://usemite.com"><strong>usemite.com</strong></a> ·
+  <a href="https://docs.usemite.com"><strong>docs.usemite.com</strong></a> ·
+  <a href="https://www.npmjs.com/package/@usemite/sdk"><strong>npm</strong></a>
+</p>
 
-## Installation
+---
+
+Mite gives your users a way to report bugs from inside your app — a shake
+gesture, an annotated screenshot, and the device context you need to fix the
+problem. It also shows release notes after an update, collects feature
+requests, and asks happy users for a store review.
 
 ```bash
 npm install @usemite/sdk
-# or
-yarn add @usemite/sdk
-# or
-bun add @usemite/sdk
 ```
 
-`react`, `react-native`, and `expo-device` are required peer dependencies.
-Everything else is optional and only needed for the feature that uses it — see
-[Peer dependencies](https://docs.usemite.com/#peer-dependencies).
+**New here?** Start at [usemite.com](https://usemite.com) to create a project
+and get an API key, then follow the
+[Getting Started guide](https://docs.usemite.com/).
 
-## Quick start
+**Already installed?** The full SDK reference is in
+[docs.usemite.com](https://docs.usemite.com), and the package README is in
+[`package/`](package/README.md).
 
-```tsx
-import AsyncStorage from '@react-native-async-storage/async-storage'
-// or: import { MMKV } from 'react-native-mmkv'
-import { Mite, MiteProvider, ShakeToReport, WhatsNew } from '@usemite/sdk'
-
-const mite = new Mite({
-  apiKey: process.env.EXPO_PUBLIC_MITE_API_KEY,
-  identityStorage: AsyncStorage, // or: new MMKV()
-})
-
-mite.init()
-
-export default function RootLayout() {
-  return (
-    <MiteProvider miteInstance={mite}>
-      {/* Your app */}
-      <ShakeToReport />
-      <WhatsNew />
-    </MiteProvider>
-  )
-}
-```
-
-That gives you shake-to-report bug filing with annotated screenshots, and
-release notes shown once per app update. Pass `identityStorage` so the anonymous
-user ID survives app restarts.
-
-Submit a report yourself with the hook:
-
-```tsx
-import { useBugReport } from '@usemite/sdk'
-
-const { submitBug, submitting, error } = useBugReport()
-
-await submitBug({
-  title: 'App crashes on launch',
-  description: 'The app shows a white screen and closes immediately.',
-})
-```
-
-## Documentation
-
-| Guide | |
-| --- | --- |
-| [Getting Started](https://docs.usemite.com/) | Installation, setup, and configuration |
-| [Identity Management](https://docs.usemite.com/identity) | Anonymous and identified users, privacy opt-out |
-| [Bug Reports](https://docs.usemite.com/bug-reports) | Submitting reports with attachments |
-| [In-App Bug Reporting](https://docs.usemite.com/shake-to-report) | Shake gesture, screenshot, annotation |
-| [Releases](https://docs.usemite.com/releases) | Fetching published releases |
-| [What's New](https://docs.usemite.com/whats-new) | Release notes after an update |
-| [Feature Requests](https://docs.usemite.com/feature-requests) | Board, voting, and submissions |
-| [Store Review Prompt](https://docs.usemite.com/store-review) | Routing happy users to the app store |
-| [Navigation Breadcrumbs](https://docs.usemite.com/navigation-breadcrumbs) | Screen trail on bug reports |
-| [Offline Queue](https://docs.usemite.com/offline-queue) | Retry behavior for failed reports |
-
-**Reference:** [Mite Instance API](https://docs.usemite.com/mite-instance) ·
-[Hooks](https://docs.usemite.com/hooks) ·
-[Components](https://docs.usemite.com/components) ·
-[Types](https://docs.usemite.com/types)
-
-## Development
+## Repository
 
 This is a Bun workspace monorepo:
 
-- `package/` — the SDK
-- `example/` — Expo demo app
+| Directory | Contents |
+| --- | --- |
+| [`package/`](package) | The `@usemite/sdk` package |
+| [`example/`](example) | Expo demo app |
 
 ```bash
 bun install
