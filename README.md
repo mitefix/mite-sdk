@@ -86,15 +86,16 @@ This is a Bun workspace monorepo:
 
 - `package/` — the SDK
 - `example/` — Expo demo app
-- `docs/` — documentation site (Next.js + Fumadocs)
 
 ```bash
 bun install
 bun typescript          # typecheck every workspace
 cd package && bun test  # run SDK tests
 cd example && bun start # run the demo app
-cd docs && bun dev      # run the docs site
 ```
+
+The documentation site lives in its own repo:
+[usemite/docs](https://github.com/usemite/docs).
 
 ## License
 
