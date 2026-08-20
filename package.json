@@ -10,8 +10,7 @@
   },
   "workspaces": [
     "example",
-    "package",
-    "docs"
+    "package"
   ],
   "packageManager": "bun@1.1.34",
   "author": "Henry Paulino <me@henrypl.com> (https://github.com/corasan)",
